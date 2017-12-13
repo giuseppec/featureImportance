@@ -1,0 +1,18 @@
+Package: featureImportance
+Title: What the Package Does (one line, title case)
+Version: 0.0.0.9000
+Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
+Description: What the package does (one paragraph).
+Depends: 
+    R (>= 3.0.2),
+    mlr (>= 2.11)
+Imports:
+    backports (>= 1.1.0),
+    BBmisc (>= 1.11),
+    checkmate (>= 1.8.2),
+    data.table,
+    parallelMap (>= 1.3),
+    stringi
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
