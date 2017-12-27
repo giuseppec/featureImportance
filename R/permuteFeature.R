@@ -2,7 +2,7 @@ permuteFeature = function(data, features) {
   #assertDataFrame(data)
   #assertSubset(features, colnames(data))
   idx = sample(seq_row(data))
-  data[, feature] = data[idx, features]
+  data[, features] = data[idx, features]
   return(data)
 }
 
