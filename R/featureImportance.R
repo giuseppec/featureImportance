@@ -1,5 +1,5 @@
 featureImportance = function(learner, task, resampling, measures, weights = NULL,
-  features = getTaskFeatureNames(task), n.feat.perm = 1, ...) {
+  features = getTaskFeatureNames(task), n.feat.perm = 10, ...) {
   # instantiate resampling
   if (inherits(resampling, "ResampleDesc"))
     resampling = mlr::makeResampleInstance(resampling, task = task)
