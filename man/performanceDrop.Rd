@@ -5,7 +5,7 @@
 \title{Drop in Performance}
 \usage{
 performanceDrop(object, data, features, measures, n.feat.perm = 10,
-  local = FALSE)
+  local = FALSE, ...)
 }
 \arguments{
 \item{object}{[\code{\link[mlr]{WrappedModel}} | \code{\link[mlr]{ResampleResult}}] \cr

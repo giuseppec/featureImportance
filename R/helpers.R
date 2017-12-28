@@ -2,15 +2,17 @@
 # @param perf.shuffled a vector of the performance(s) when a feature was shuffled
 # @param perf.true a vector of the true performance(s)
 # @param measures the performance measures that have been used: if big values for the measure are better, the drop in performance is true - permuted (negative "drop" values are performance "gains")
-measurePerformanceDrop = function(perf.shuffled, perf.true, minimize) {
+measurePerformanceDrop = function(perf.shuffled, perf.true, minimize, obs.id = NULL) {
   drop = perf.true - perf.shuffled
   sign = ifelse(minimize, 1, -1)
   if (nrow(perf.shuffled) == 1) {
     return(sign*drop)
   } else {
+    if (is.null(obs.id))
+      obs.id = seq_row(perf.shuffled)
     ret = as.matrix(drop) %*% diag(sign)
     ret = setColNames(as.data.frame(ret, stringsAsFactors = FALSE), colnames(drop))
-    ret = cbind("obs" = seq_row(ret), ret)
+    ret = cbind("obs" = obs.id, ret)
     return(ret)
   }
 }
