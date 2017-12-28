@@ -8,6 +8,7 @@ measurePerformanceDrop = function(perf.shuffled, perf.true, measures, minimize) 
   return(sign*drop)
 }
 
+# FIXME: make S3 method and allow other models: add pred.fun, target, measures as functions(truth, response) and if measures should be minimized
 # shuffles feature in test data, predicts and measures performance
 measurePerformance = function(mod, data, feature, measures, shuffle = FALSE, local = FALSE) {
   #assertClass(mod, "WrappedModel")
@@ -37,10 +38,10 @@ measurePerformance = function(mod, data, feature, measures, shuffle = FALSE, loc
 # Split prediction w.r.t. vector f -> Creates as many prediction objects as unique values in f, see also ?split
 splitPrediction = function(p, f) {
   pred.data = split(p$data, f)
-  p2 = p[names(p) %nin% "data"]
-  class(p2) = class(p)
-  lapply(pred.data, function(pred) {
-    p2$data = pred
+  p2 = makeS3Obj(class(p), predict.type = p$predict.type, data = NULL, threshold = p$threshold,
+    task.desc = p$task.desc, time = p$time, error = p$error, dump = p$dump)
+  lapply(pred.data, function(x) {
+    p2$data = x
     p2
   })
 }
