@@ -15,6 +15,7 @@ Imports:
     stringi
 Suggests: 
     testthat,
+    e1071,
     rpart
 License: BSD_3_clause + file LICENSE
 Encoding: UTF-8

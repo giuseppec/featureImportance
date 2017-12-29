@@ -33,13 +33,13 @@ parallelLibrary("checkmate", "BBmisc", "mlr", "featureImportance")
 feat.names = getTaskFeatureNames(task)
 feat.imp = featureImportance(learner, task, resampling, measures, n.feat.perm = 10)
 
-null.x = nullImportance(learner, task, resampling, measures, n.feat.perm = 1000, n.target.perm = 1)
+null.x = nullImportance(learner, task, resampling, measures, n.feat.perm = 100, n.target.perm = 1)
 null.x = aggregate(acc ~ features + n.target.perm + n.feat.perm, data = null.x, mean)
 
-null.y = nullImportance(learner, task, resampling, measures, n.feat.perm = 1, n.target.perm = 1000)
+null.y = nullImportance(learner, task, resampling, measures, n.feat.perm = 1, n.target.perm = 100)
 null.y = aggregate(acc ~ features + n.target.perm + n.feat.perm, data = null.y, mean)
 
-null.xy = nullImportance(learner, task, resampling, measures, n.feat.perm = 1000, n.target.perm = 1000)
+null.xy = nullImportance(learner, task, resampling, measures, n.feat.perm = 100, n.target.perm = 100)
 null.xy = aggregate(acc ~ features + n.target.perm + n.feat.perm, data = null.xy, mean)
 parallelStop()
 
@@ -258,13 +258,34 @@ PIMP.default = function(X, y, rForest, S = 100, parallel = FALSE, ncores = 0,
 }
 
 library(vita)
+learner = makeLearner("classif.randomForest", predict.type = "prob", ntree = 25)
+task = pid.task
+measures = acc
+weights = NULL
+features = getTaskFeatureNames(task)
+resampling = makeResampleInstance(makeResampleDesc("CV", iter = 3), task)
+
+mod = train(learner, task)
+d = getTaskData(task)
+target = getTaskTargetNames(task)
+imp = getFeatureImportance(mod, "permutation")
+
 pimp = vita:::PIMP.default(d[, !colnames(d) %in% target], d[, target], mod$learner.model, S = 90)
 sort(pimp$VarImp[, "VarImp"])
 pimp = vita:::PimpTest.default(pimp)
 pimp = cbind(pimp$VarImp, pimp$pvalue)
 pimp[order(pimp[, "p-value"], decreasing = TRUE),]
 
+library(Boruta)
 b = Boruta(diabetes ~ ., data = d)
+
+
+feat.names = getTaskFeatureNames(task)
+feat.imp = featureImportance(learner, task, resampling, measures, n.feat.perm = 10)
+null.y = nullImportance(learner, task, resampling, measures, n.feat.perm = 10, n.target.perm = 50)
+
+
+
 
 
 library(mlbench)

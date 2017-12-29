@@ -31,6 +31,8 @@ performanceDrop.WrappedModel = function(object, data, features, measures, n.feat
   assertClass(object, "WrappedModel")
   assertDataFrame(data)
   # FIXME: assert features (we should allow list of characters)
+  # if (!is.list(features))
+  #   features = list(features)
   if (inherits(measures, "Measure"))
     measures = list(measures)
   assertList(measures, "Measure")
@@ -59,17 +61,12 @@ performanceDrop.ResampleResult = function(object, data, features, measures, n.fe
   assertClass(object, "ResampleResult")
   if (is.null(object$models))
     stop("Use 'models = TRUE' to create the ResampleResult.")
-  has.pred = !is.null(object$pred)
 
   # for each fold and each feature: permute the feature and measure performance on permuted feature
   ret = lapply(seq_along(object$models), function(i) {
     mod = object$models[[i]]
-    if (has.pred) {
-      test.ind = object$pred$instance$test.inds[[i]]
-    } else {
-      train.ind = mod$subset
-      test.ind = setdiff(seq_row(data), train.ind)
-    }
+    train.ind = mod$subset
+    test.ind = setdiff(seq_row(data), train.ind)
     performanceDrop(object = mod, data = data[test.ind, ], features = features,
       measures = measures, n.feat.perm = n.feat.perm, local = local,
       obs.id = test.ind)

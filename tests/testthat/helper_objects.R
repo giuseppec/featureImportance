@@ -3,7 +3,7 @@ task = pid.task
 mod = train(learner, task)
 
 measures = list(acc, ber, mmce)
-mid = vcapply(measures, function(x) x$id)
+mid = BBmisc::vcapply(measures, function(x) x$id)
 minimize = !BBmisc::vlapply(measures, function(x) x$minimize)
 
 features = getTaskFeatureNames(task)

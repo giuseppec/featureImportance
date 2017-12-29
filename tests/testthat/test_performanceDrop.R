@@ -30,6 +30,6 @@ test_that("performanceDrop with ResampleResult works", {
     n.test = length(unlist(rin$test.inds))
     expect_data_table(perf.drop.local, nrows = length(feat)*n.test)
     expect_set_equal(c("cv.iter", "features", "n.feat.perm", "obs", mid), colnames(perf.drop.local))
-    expect_true(identical(res$pred$data$id, perf.drop.local$obs))
+    expect_set_equal(res$pred$data$id, perf.drop.local$obs)
   }
 })
