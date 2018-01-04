@@ -1,5 +1,21 @@
-shapleyImportance = function(f, m = "all.unique", object, data, features, measures, n.feat.perm = 10, local = FALSE) {
+#' @title Shapley Importance
+#'
+#' @description Computes the shapley importance of a feature.
+#'
+#' @param f [\code{character(1)}] \cr
+#' the feature for which the shapley importance should be computed.
+#' @param m [\code{numeric(1)} | \code{"all.unique"}] \cr
+#' the number of permutations that should be used. If m > number of all unique permutatios then only all unique permutations are used. Default is \code{"all.unique"}.
+#' @template arg_object
+#' @param target [\code{character(1)}] \cr
+#' The target feature.
+#' @template arg_measures
+#' @template arg_n.feat.perm
+#' @template arg_local
+#' @export
+shapleyImportance = function(f, m = "all.unique", object, data, target, measures, n.feat.perm = 10, local = FALSE) {
   mid = BBmisc::vcapply(measures, function(x) x$id)
+  features = setdiff(colnames(data), target)
   perm = generatePermutations(features, m)
 
   # set = lapply(perm, function(new.feature.order) {
@@ -46,9 +62,11 @@ shapleyImportance = function(f, m = "all.unique", object, data, features, measur
 
   # compute performance drops only for unique sets
   unique.ind = !duplicated(set.without.f)
-  imp.without.f = performanceDrop(object, data = data, features = set.without.f[unique.ind],
+  imp.without.f = performanceDrop(object = object, data = data,
+    features = set.without.f[unique.ind],
     measures = measures, n.feat.perm = n.feat.perm, local = local)
-  imp.with.f = performanceDrop(object, data = data, features = set.with.f[unique.ind],
+  imp.with.f = performanceDrop(object = object, data = data,
+    features = set.with.f[unique.ind],
     measures = measures, n.feat.perm = n.feat.perm, local = local)
 
   # aggregate performance drops for each feature
@@ -74,12 +92,15 @@ shapleyImportance = function(f, m = "all.unique", object, data, features, measur
     marginal.contributions = marginal.contributions)
 }
 
+### helper functions
+# generate m permutations for alle elements in features
 generatePermutations = function(features, m = "all.unique") {
+  assertCharacter(features)
   assert(checkSubset(m, "all.unique"), checkIntegerish(m, lower = 1))
   n.feat = length(features)
 
   if (m == "all.unique" | (m >= 2^n.feat)) {
-    messagef("As there are %s features, all %s unique permuatations will be generated!", n.feat, 2^n.feat)
+    messagef("All %s unique permuatations for the %s features will be generated!", 2^n.feat, n.feat)
     p = e1071::permutations(n.feat)
     p = lapply(seq_row(p), function(i) features[p[i,]])
   } else {
@@ -88,12 +109,6 @@ generatePermutations = function(features, m = "all.unique") {
   return(p)
 }
 
-print.ShapleyImportance = function(x) {
-  catf("ShapleyImportance:")
-  catf(" Number of permutations: %s", x$n.permutations)
-  catf(" Shapley value for '%s': \n  %s", x$feature, BBmisc::listToShortString(as.list(shap$shapley.value)))
-  #print(x$shapley.value)
-}
 
 # drawSubsetOfPowerset = function(x, m, remove.duplicates = FALSE) {
 #   assertIntegerish(x)

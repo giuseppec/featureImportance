@@ -2,8 +2,7 @@
 #'
 #' @description Measures the drop in performance.
 #'
-#' @param object [\code{\link[mlr]{WrappedModel}} | \code{\link[mlr]{ResampleResult}}] \cr
-#' Currently either the trained \code{\link[mlr]{WrappedModel}} or a \code{\link[mlr]{ResampleResult}}.
+#' @template arg_object
 #' @param data [\code{data.frame}] \cr
 #' The data whose features will be shuffled in order to measure the performance drop.
 #' If \code{object} is of class \cr
@@ -11,15 +10,9 @@
 #' \code{WrappedModel}, you should use some independent test data that was not used to fit the model (although you could also use the train data here).
 #' @param features [\code{character}] \cr
 #' A vector of features for which the importance should be computed.
-#' @param measures [\code{\link[mlr]{Measure}} | list of \code{\link[mlr]{Measure}}] \cr
-#' Performance measure(s) used to measure the drop in performance.
-#' @param n.feat.perm [\code{numeric(1)}] \cr
-#' The number of Monte-Carlo iterations, e.g. number of permutations of the feature(s) to compute the feature importance.
-#' The default is 10.
-#' @param local [\code{logical(1)}] \cr
-#' Should observation-wise importance be computed?
-#' Note that not all measures support this (e.g. one can not compute the AUC for one observation).
-#' The default is FALSE.
+#' @template arg_measures
+#' @template arg_n.feat.perm
+#' @template arg_local
 #' @param ... Not used.
 #' @export
 performanceDrop = function(object, data, features, measures, n.feat.perm = 10, local = FALSE, ...) {

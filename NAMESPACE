@@ -3,6 +3,7 @@
 S3method(performanceDrop,ResampleResult)
 S3method(performanceDrop,WrappedModel)
 export(performanceDrop)
+export(shapleyImportance)
 import(BBmisc)
 import(checkmate)
 import(data.table)
