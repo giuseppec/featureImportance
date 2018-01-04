@@ -26,14 +26,14 @@ shapleyImportance = function(object, data, target, features, measures,
 
   # shapley value is the mean of all marginal contributions
   shapley.value = marginal.contributions[, lapply(.SD, mean), .SDcols = mid, by = "features"]
-  # FIXME: find publication that says sd of marginals is uncertainty of shapley vlaue
-  #shapley.sd = marginal.contributions[, lapply(.SD, sd), .SDcols = mid, by = "features"]
+  # variance is uncertainty, see https://github.com/slundberg/ShapleyValues.jl#least-squares-regression
+  shapley.uncertainty = marginal.contributions[, lapply(.SD, var), .SDcols = mid, by = "features"]
 
   makeS3Obj("ShapleyImportance",
     permutations = perm,
     measures = measures,
     shapley.value = shapley.value,
-    #shapley.sd = shapley.sd,
+    shapley.uncertainty = shapley.uncertainty,
     marginal.contributions = marginal.contributions)
 }
 
@@ -52,82 +52,82 @@ print.ShapleyImportance = function(x, ...) {
 # @param f [\code{character(1)}] \cr
 # single feature for wich marginal contributions are computed using permutations in 'perm'
 # @param perm list of permutations that are used to compute marginal contributions for
-# marginalContributions = function(object, data, f, measures, perm,
-#   n.feat.perm = 10, local = FALSE) {
-#   mid = BBmisc::vcapply(measures, function(x) x$id)
-#
-#   set.without.f = lapply(perm, function(new.feature.order) {
-#     # index of feature f in permuted feature vector
-#     f.ind = which(new.feature.order == f)
-#     # features before f (excluding feature f) in alphabetical order
-#     if (f.ind == 1) {
-#       return(character(0))
-#     } else {
-#       ret = new.feature.order[1:(f.ind - 1)]
-#       return(ret[order(ret)])
-#     }
-#   })
-#   set.with.f = lapply(set.without.f, function(x) c(f, x))
-#
-#   # compute performance drops only for unique sets
-#   unique.ind = !duplicated(set.without.f)
-#   imp.without.f = performanceDrop(object = object, data = data,
-#     features = set.without.f[unique.ind],
-#     measures = measures, n.feat.perm = n.feat.perm, local = local)
-#   imp.with.f = performanceDrop(object = object, data = data,
-#     features = set.with.f[unique.ind],
-#     measures = measures, n.feat.perm = n.feat.perm, local = local)
-#
-#   # aggregate performance drops for each feature
-#   imp.without.f = imp.without.f[, lapply(.SD, mean), .SDcols = mid, by = "features"]
-#   imp.with.f = imp.with.f[, lapply(.SD, mean), .SDcols = mid, by = "features"]
-#
-#   # expand performance drops if set occurs more than once
-#   imp.without.f = imp.without.f[match(as.character(set.without.f), imp.without.f$features),]
-#   imp.with.f = imp.with.f[match(as.character(set.with.f), imp.with.f$features),]
-#
-#   # differences are the marginal contributions
-#   marginal.contributions = imp.with.f[, mid, with = FALSE] - imp.without.f[, mid, with = FALSE]
-#   marginal.contributions$permutations = as.character(perm)
-#
-#   return(marginal.contributions)
-# }
-
-# Slower computation of marginal contribution as 'set' contains duplicates
 marginalContributions = function(object, data, f, measures, perm,
   n.feat.perm = 10, local = FALSE) {
   mid = BBmisc::vcapply(measures, function(x) x$id)
 
-  set = lapply(perm, function(new.feature.order) {
+  set.without.f = lapply(perm, function(new.feature.order) {
     # index of feature f in permuted feature vector
     f.ind = which(new.feature.order == f)
-    # features before f (including feature f)
-    with.f = new.feature.order[1:f.ind]
-    # features before f (excluding feature f)
-    without.f = setdiff(with.f, f)
-    list(with.f = with.f, without.f = without.f)
-  })
-  # FIXME: To speedup, compute performanceDrop for set = unique(lapply(unname(Reduce(c, set)), sort))
-  shap = lapply(set, function(x) {
-    with.f = x$with.f
-    without.f = x$without.f
-    imp.with.f = performanceDrop(object, data = data, features = list(with.f),
-      measures = measures, n.feat.perm = n.feat.perm, local = local)
-    imp.with.f = imp.with.f[, lapply(.SD, mean), .SDcols = mid] # by = "features"
-
-    if (length(without.f) != 0) {
-      imp.without.f = performanceDrop(object, data = data, features = list(without.f),
-        measures = measures, n.feat.perm = n.feat.perm, local = local)
-      imp.without.f = imp.without.f[, lapply(.SD, mean), .SDcols = mid]
-      ret = imp.with.f - imp.without.f
+    # features before f (excluding feature f) in alphabetical order
+    if (f.ind == 1) {
+      return(character(0))
     } else {
-      ret = imp.with.f
+      ret = new.feature.order[1:(f.ind - 1)]
+      return(ret[order(ret)])
     }
-    return(ret)
   })
-  marginal.contributions =  data.table::rbindlist(setNames(shap, perm), idcol = "permutations")
+  set.with.f = lapply(set.without.f, function(x) c(f, x))
+
+  # compute performance drops only for unique sets
+  unique.ind = !duplicated(set.without.f)
+  imp.without.f = performanceDrop(object = object, data = data,
+    features = set.without.f[unique.ind],
+    measures = measures, n.feat.perm = n.feat.perm, local = local)
+  imp.with.f = performanceDrop(object = object, data = data,
+    features = set.with.f[unique.ind],
+    measures = measures, n.feat.perm = n.feat.perm, local = local)
+
+  # aggregate performance drops for each feature
+  imp.without.f = imp.without.f[, lapply(.SD, mean), .SDcols = mid, by = "features"]
+  imp.with.f = imp.with.f[, lapply(.SD, mean), .SDcols = mid, by = "features"]
+
+  # expand performance drops if set occurs more than once
+  imp.without.f = imp.without.f[match(as.character(set.without.f), imp.without.f$features),]
+  imp.with.f = imp.with.f[match(as.character(set.with.f), imp.with.f$features),]
+
+  # differences are the marginal contributions
+  marginal.contributions = imp.with.f[, mid, with = FALSE] - imp.without.f[, mid, with = FALSE]
+  marginal.contributions$permutations = as.character(perm)
+
   return(marginal.contributions)
 }
+
+# Slower computation of marginal contribution as 'set' contains duplicates
+# marginalContributions = function(object, data, f, measures, perm,
+#   n.feat.perm = 10, local = FALSE) {
+#   mid = BBmisc::vcapply(measures, function(x) x$id)
+#
+#   set = lapply(perm, function(new.feature.order) {
+#     # index of feature f in permuted feature vector
+#     f.ind = which(new.feature.order == f)
+#     # features before f (including feature f)
+#     with.f = new.feature.order[1:f.ind]
+#     # features before f (excluding feature f)
+#     without.f = setdiff(with.f, f)
+#     list(with.f = with.f, without.f = without.f)
+#   })
+#   # FIXME: To speedup, compute performanceDrop for set = unique(lapply(unname(Reduce(c, set)), sort))
+#   shap = lapply(set, function(x) {
+#     with.f = x$with.f
+#     without.f = x$without.f
+#     imp.with.f = performanceDrop(object, data = data, features = list(with.f),
+#       measures = measures, n.feat.perm = n.feat.perm, local = local)
+#     imp.with.f = imp.with.f[, lapply(.SD, mean), .SDcols = mid] # by = "features"
+#
+#     if (length(without.f) != 0) {
+#       imp.without.f = performanceDrop(object, data = data, features = list(without.f),
+#         measures = measures, n.feat.perm = n.feat.perm, local = local)
+#       imp.without.f = imp.without.f[, lapply(.SD, mean), .SDcols = mid]
+#       ret = imp.with.f - imp.without.f
+#     } else {
+#       ret = imp.with.f
+#     }
+#     return(ret)
+#   })
+#   marginal.contributions =  data.table::rbindlist(setNames(shap, perm), idcol = "permutations")
+#   return(marginal.contributions)
+# }
 
 # generate m permutations for alle elements in features
 generatePermutations = function(features, m = "all.unique") {
