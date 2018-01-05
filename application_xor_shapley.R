@@ -37,10 +37,10 @@ res = resample(learner, task, resampling, measures, models = TRUE)
 
 # importance
 imp = performanceDrop(res, data = d, features = features, measures = measures,
-  n.feat.perm = 10, local = FALSE)
+  n.feat.perm = 1, local = FALSE)
 f.imp = imp[, lapply(.SD, mean), .SDcols = mid, by = "features"]
 f.imp
 
 shapley = shapleyImportance(object = res, data, target = "classes", features = features,
-  measures = list(acc, mmce, auc), m = 100, n.feat.perm = 10)
+  measures = list(acc, mmce, auc), m = 100, n.feat.perm = 1)
 shapley

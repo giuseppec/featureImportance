@@ -27,9 +27,12 @@ featureImportance = function(learner, task, resampling, measures, weights = NULL
   )
 }
 
-print.featureImportance = function(x, measure.id = names(x$measures)[1], ...) {
+print.featureImportance = function(x, measure.id = names(x$measures), by = NULL, ...) {
   # expr = parse(text = sprintf("%s := mean(%s)", measure.id, measure.id))
   # return(x$importance[, eval(expr), by = "feature"])
-  print(x$importance)
+  assertSubset(by, c("cv.iter", "n.feat.perm"), empty.ok = TRUE)
+  catf("Object of class 'featureImportance'")
+  catf("Aggregated importance:")
+  print(x$importance[, lapply(.SD, mean), .SDcols = measure.id, by = c("features", by)], ...)
   #x[, mean(acc), by = c("feature")]
 }

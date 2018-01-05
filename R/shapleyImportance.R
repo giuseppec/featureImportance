@@ -18,16 +18,23 @@ shapleyImportance = function(object, data, target, features, measures,
   mid = BBmisc::vcapply(measures, function(x) x$id)
   perm = generatePermutations(features = setdiff(colnames(data), target), m = m)
 
-  marginal.contributions = setNames(lapply(features, function(f) {
-    marginalContributions(object = object, data = data, f = f,
-      measures = measures, perm = perm, n.feat.perm = n.feat.perm, local = local)
-  }), features)
-  marginal.contributions = data.table::rbindlist(marginal.contributions, idcol = "features")
+  # marginal.contributions = setNames(lapply(features, function(f) {
+  #   marginalContributions(object = object, data = data, f = f,
+  #     measures = measures, perm = perm, n.feat.perm = n.feat.perm, local = local)
+  # }), features)
+  # marginal.contributions = data.table::rbindlist(marginal.contributions, idcol = "features")
+
+  # FIXME: for each feature we compute the performance drop for the same set multiple times, at least for m = "all.unique" permutations. We should do this once.
+  args = list(object = object, data = data,  measures = measures, perm = perm, n.feat.perm = n.feat.perm, local = local)
+  marginal.contributions = parallelMap::parallelMap(fun = marginalContributions, f = features, more.args = args)
+  mc = lapply(marginal.contributions, function(x) x$marginal.contributions)
+  mc = setNames(mc, features)
+  mc = data.table::rbindlist(mc, idcol = "features")
 
   # shapley value is the mean of all marginal contributions
-  shapley.value = marginal.contributions[, lapply(.SD, mean), .SDcols = mid, by = "features"]
+  shapley.value = mc[, lapply(.SD, mean), .SDcols = mid, by = "features"]
   # variance is uncertainty, see https://github.com/slundberg/ShapleyValues.jl#least-squares-regression
-  shapley.uncertainty = marginal.contributions[, lapply(.SD, var), .SDcols = mid, by = "features"]
+  shapley.uncertainty = mc[, lapply(.SD, var), .SDcols = mid, by = "features"]
 
   makeS3Obj("ShapleyImportance",
     permutations = perm,
@@ -90,7 +97,27 @@ marginalContributions = function(object, data, f, measures, perm,
   marginal.contributions = imp.with.f[, mid, with = FALSE] - imp.without.f[, mid, with = FALSE]
   marginal.contributions$permutations = as.character(perm)
 
-  return(marginal.contributions)
+  #return(marginal.contributions)
+  makeS3Obj("MarginalContribution",
+    feature = f,
+    importance = unique(rbind(imp.with.f, imp.without.f)),
+    marginal.contributions = marginal.contributions)
+}
+
+# generate m permutations for alle elements in features
+generatePermutations = function(features, m = "all.unique") {
+  assertCharacter(features)
+  assert(checkSubset(m, "all.unique"), checkIntegerish(m, lower = 1))
+  n.feat = length(features)
+
+  if (m == "all.unique" | (m >= 2^n.feat)) {
+    messagef("All %s unique permuatations for the %s features were generated!", 2^n.feat, n.feat)
+    p = e1071::permutations(n.feat)
+    p = lapply(seq_row(p), function(i) features[p[i,]])
+  } else {
+    p = lapply(1:m, function(x) sample(features))
+  }
+  return(p)
 }
 
 # Slower computation of marginal contribution as 'set' contains duplicates
@@ -128,24 +155,7 @@ marginalContributions = function(object, data, f, measures, perm,
 #   marginal.contributions =  data.table::rbindlist(setNames(shap, perm), idcol = "permutations")
 #   return(marginal.contributions)
 # }
-
-# generate m permutations for alle elements in features
-generatePermutations = function(features, m = "all.unique") {
-  assertCharacter(features)
-  assert(checkSubset(m, "all.unique"), checkIntegerish(m, lower = 1))
-  n.feat = length(features)
-
-  if (m == "all.unique" | (m >= 2^n.feat)) {
-    messagef("All %s unique permuatations for the %s features were generated!", 2^n.feat, n.feat)
-    p = e1071::permutations(n.feat)
-    p = lapply(seq_row(p), function(i) features[p[i,]])
-  } else {
-    p = lapply(1:m, function(x) sample(features))
-  }
-  return(p)
-}
-
-
+#
 # drawSubsetOfPowerset = function(x, m, remove.duplicates = FALSE) {
 #   assertIntegerish(x)
 #   n = length(x)
