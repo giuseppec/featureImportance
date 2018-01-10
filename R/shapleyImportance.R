@@ -18,12 +18,6 @@ shapleyImportance = function(object, data, target, features, measures,
   mid = BBmisc::vcapply(measures, function(x) x$id)
   perm = generatePermutations(features = setdiff(colnames(data), target), m = m)
 
-  # marginal.contributions = setNames(lapply(features, function(f) {
-  #   marginalContributions(object = object, data = data, f = f,
-  #     measures = measures, perm = perm, n.feat.perm = n.feat.perm, local = local)
-  # }), features)
-  # marginal.contributions = data.table::rbindlist(marginal.contributions, idcol = "features")
-
   # FIXME: for each feature we compute the performance drop for the same set multiple times, at least for m = "all.unique" permutations. We should do this once.
   args = list(object = object, data = data,  measures = measures, perm = perm, n.feat.perm = n.feat.perm, local = local)
   marginal.contributions = parallelMap::parallelMap(fun = marginalContributions, f = features, more.args = args)
