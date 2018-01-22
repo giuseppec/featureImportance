@@ -104,14 +104,64 @@ generatePermutations = function(features, m = "all.unique") {
   assert(checkSubset(m, "all.unique"), checkIntegerish(m, lower = 1))
   n.feat = length(features)
 
-  if (m == "all.unique" | (m >= 2^n.feat)) {
-    messagef("All %s unique permuatations for the %s features were generated!", 2^n.feat, n.feat)
+  if (m == "all.unique" | (m >= factorial(n.feat))) {
+    messagef("All %s unique permuatations for the %s features were generated!", factorial(n.feat), n.feat)
     p = e1071::permutations(n.feat)
     p = lapply(seq_row(p), function(i) features[p[i,]])
   } else {
     p = lapply(1:m, function(x) sample(features))
   }
   return(p)
+}
+
+generateMarginalContribution = function(f, perm) {
+  lapply(perm, function(new.feature.order) {
+    # index of feature f in permuted feature vector
+    f.ind = which(new.feature.order == f)
+    # features before f (excluding feature f) in alphabetical order
+    if (f.ind == 1) {
+      without.f = character(0)
+    } else {
+      without.f = new.feature.order[1:(f.ind - 1)]
+      #without.f = without.f[order(without.f)]
+    }
+    with.f = c(without.f, f)
+    return(list(with.f = with.f, without.f = without.f))
+  })
+}
+
+calculateValueFunction = function(features, object, data, measures,
+  n.feat.perm = 10, local = FALSE) {
+  mid = BBmisc::vcapply(measures, function(x) x$id)
+  ret = performanceDrop(object = object, data = data, features = features,
+    measures = measures, n.feat.perm = n.feat.perm, local = local)
+  return(ret[, lapply(.SD, mean), .SDcols = mid, by = "features"])
+}
+
+calculateValueFunction2 = function(features, object, data, measures,
+  n.feat.perm = 10, local = FALSE) {
+  mid = BBmisc::vcapply(measures, function(x) x$id)
+  shuffle.features = setdiff(colnames(data), features)
+  ret = measurePerformance(mod = object, data = data, feature = shuffle.features,
+    measures = measures, shuffle = TRUE, local = local)
+  empty.set = measurePerformance(mod = object, data = data, feature = colnames(data),
+    measures = measures, shuffle = TRUE, local = local)
+  return(empty.set - ret)
+}
+
+getMarginalContributionValues = function(mc, vf) {
+  mc.vals = lapply(mc, function(m) {
+    f = vf$features
+    ret = vf[f %in% list(m$with.f), -"features"] - vf[f %in% list(m$without.f), -"features"]
+    dt.feat = data.table(features.with.f = list(m$with.f), features.without.f = list(m$without.f))
+    cbind(dt.feat, ret)
+  })
+  rbindlist(mc.vals)
+}
+
+getShapleyImportance = function(mc.vals, measures) {
+  mid = BBmisc::vcapply(measures, function(x) x$id)
+  mc.vals[, lapply(.SD, mean), .SDcols = mid]
 }
 
 # Slower computation of marginal contribution as 'set' contains duplicates

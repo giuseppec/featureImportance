@@ -2,6 +2,7 @@ permuteFeature = function(data, features) {
   #assertDataFrame(data)
   #assertSubset(features, colnames(data))
   idx = sample(seq_row(data))
+  # FIXME: do we want to permute the whole block-matrix of features or permute each single feature separately? Here we permute the block-matrix containing all features in 'features'.
   data[, features] = data[idx, features]
   return(data)
 }

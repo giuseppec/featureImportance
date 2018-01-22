@@ -31,8 +31,9 @@ performanceDrop.WrappedModel = function(object, data, features, measures, n.feat
   assertClass(object, "WrappedModel")
   assertDataFrame(data)
   # FIXME: assert features (we should allow list of characters)
-  # if (!is.list(features))
-  #   features = list(features)
+  if (!is.list(features))
+    features = list(features)
+  assertList(features, "character")
   if (inherits(measures, "Measure"))
     measures = list(measures)
   assertList(measures, "Measure")
@@ -53,7 +54,11 @@ performanceDrop.WrappedModel = function(object, data, features, measures, n.feat
     }, simplify = FALSE)
     data.table::rbindlist(perf.drop, idcol = "n.feat.perm")
   })
-  data.table::rbindlist(setNames(drop, features), idcol = "features")
+  ret = data.table::rbindlist(setNames(drop, features), idcol = "features")
+  #ret = data.table::rbindlist(drop)
+  #dt.ret = data.table(features = features)
+  #ret = cbind(dt.ret, ret)
+  return(ret)
 }
 
 #' @export
