@@ -4,24 +4,24 @@
 \alias{shapleyImportance}
 \title{Shapley Importance}
 \usage{
-shapleyImportance(f, m = "all.unique", object, data, target, measures,
+shapleyImportance(object, data, target, features, measures, m = "all.unique",
   n.feat.perm = 10, local = FALSE)
 }
 \arguments{
-\item{f}{[\code{character(1)}] \cr
-the feature for which the shapley importance should be computed.}
-
-\item{m}{[\code{numeric(1)} | \code{"all.unique"}] \cr
-the number of permutations that should be used. If m > number of all unique permutatios then only all unique permutations are used. Default is \code{"all.unique"}.}
-
 \item{object}{[\code{\link[mlr]{WrappedModel}} | \code{\link[mlr]{ResampleResult}}] \cr
 Currently either the trained \code{\link[mlr]{WrappedModel}} or a \code{\link[mlr]{ResampleResult}}.}
 
 \item{target}{[\code{character(1)}] \cr
 The target feature.}
 
+\item{features}{[\code{character}] \cr
+the feature(s) for which the shapley importance should be computed.}
+
 \item{measures}{[\code{\link[mlr]{Measure}} | list of \code{\link[mlr]{Measure}}] \cr
 Performance measure(s) used to measure the drop in performance.}
+
+\item{m}{[\code{numeric(1)} | \code{"all.unique"}] \cr
+the number of permutations that should be used. If m > number of all unique permutatios then only all unique permutations are used. Default is \code{"all.unique"}.}
 
 \item{n.feat.perm}{[\code{numeric(1)}] \cr
 The number of Monte-Carlo iterations, e.g. number of permutations of the feature(s) to compute the feature importance.

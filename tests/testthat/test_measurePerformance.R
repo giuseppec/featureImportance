@@ -1,25 +1,38 @@
 test_that("measurePerformance and measurePerformanceDrop", {
   context("measurePerformance works")
-  perf = measurePerformance(mod, data = d, features, measures, shuffle = FALSE, local = FALSE)
+  # check if measure performance works with WrappedModel
+  perf = measurePerformance(mod, data = d, measures = measures, local = FALSE)
   expect_data_frame(perf, nrows = 1, ncols = length(measures))
   expect_set_equal(colnames(perf), mid)
 
-  perf.local = measurePerformance(mod, data = d, features, measures, shuffle = FALSE, local = TRUE)
+  perf.local = measurePerformance(mod, data = d, measures = measures, local = TRUE)
   expect_data_frame(perf.local, nrows = nrow(d), ncols = length(measures))
   expect_set_equal(colnames(perf.local), mid)
 
-  context("measurePerformanceDrop works")
-  # measurePerformanceDrop
-  perf2 = measurePerformance(mod, data = d, features, measures, shuffle = TRUE, local = FALSE)
-  perf.local2 = measurePerformance(mod, data = d, features, measures, shuffle = TRUE, local = TRUE)
+  # check if measure performance works with non-WrappedModel
+  measure.fun = list(acc = measureACC, mmce = measureMMCE)
+  perf = measurePerformance(mod$learner.model, data = d, target = target, measures = measure.fun, local = FALSE,
+    predict.fun = function(object, newdata) predict(object, newdata, type = "class"))
+  expect_data_frame(perf, nrows = 1, ncols = length(measure.fun))
+  expect_set_equal(colnames(perf), names(measure.fun))
 
-  zero.drop = measurePerformanceDrop(perf.shuffled = perf, perf.true = perf, minimize = minimize)
-  expect_data_frame(zero.drop, nrows = 1, ncols = length(measures))
-  expect_true(all(zero.drop == 0))
+  perf.local = measurePerformance(mod$learner.model, data = d, target = target, measures = measure.fun, local = TRUE,
+    predict.fun = function(object, newdata) predict(object, newdata, type = "class"))
+  expect_data_frame(perf.local, nrows = nrow(d), ncols = length(measure.fun))
+  expect_set_equal(colnames(perf), names(measure.fun))
 
-  zero.drop.local = measurePerformanceDrop(perf.shuffled = perf.local, perf.true = perf.local, minimize = minimize)
-  expect_data_frame(zero.drop.local, nrows = nrow(d), ncols = length(measures) + 1)
-  expect_set_equal(colnames(zero.drop.local), c(mid, "obs"))
-  expect_true(identical(zero.drop.local$obs, seq_row(d)))
-  expect_true(all(zero.drop.local[, mid] == 0))
+  # context("measurePerformanceDrop works")
+  # # measurePerformanceDrop
+  # perf2 = measurePerformance(mod, data = d, features, measures, shuffle = TRUE, local = FALSE)
+  # perf.local2 = measurePerformance(mod, data = d, features, measures, shuffle = TRUE, local = TRUE)
+  #
+  # zero.drop = measurePerformanceDrop(perf.shuffled = perf, perf.true = perf, minimize = minimize)
+  # expect_data_frame(zero.drop, nrows = 1, ncols = length(measures))
+  # expect_true(all(zero.drop == 0))
+  #
+  # zero.drop.local = measurePerformanceDrop(perf.shuffled = perf.local, perf.true = perf.local, minimize = minimize)
+  # expect_data_frame(zero.drop.local, nrows = nrow(d), ncols = length(measures) + 1)
+  # expect_set_equal(colnames(zero.drop.local), c(mid, "obs"))
+  # expect_true(identical(zero.drop.local$obs, seq_row(d)))
+  # expect_true(all(zero.drop.local[, mid] == 0))
 })
