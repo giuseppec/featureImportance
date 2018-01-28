@@ -144,6 +144,7 @@ calculateValueFunction2 = function(features, object, data, measures,
   shuffle.features = setdiff(colnames(data), features)
   ret = measurePerformance(mod = object, data = data, feature = shuffle.features,
     measures = measures, shuffle = TRUE, local = local)
+  #FIXME: should be colnames(data) except target
   empty.set = measurePerformance(mod = object, data = data, feature = colnames(data),
     measures = measures, shuffle = TRUE, local = local)
   return(empty.set - ret)

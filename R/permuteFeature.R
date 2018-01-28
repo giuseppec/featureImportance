@@ -1,4 +1,7 @@
-permuteFeature = function(data, features) {
+# @param data the dataset
+# @param features features to be permuted (block-wise)
+# @param keep.fixed which column should be kept fixed?
+permuteFeature = function(data, features, keep.fixed = NULL) {
   #assertDataFrame(data)
   #assertSubset(features, colnames(data))
   # FIXME: do we want to permute the whole block-matrix of features or permute each single feature separately? Here we permute the block-matrix containing all features in 'features'.
