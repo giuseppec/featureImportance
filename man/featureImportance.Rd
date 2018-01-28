@@ -35,10 +35,24 @@ Note that not all measures support this (e.g. one can not compute the AUC for on
 The default is FALSE.}
 
 \item{measures}{[\code{\link[mlr]{Measure}} | list of \code{\link[mlr]{Measure}} | \code{function} | list of \code{function}] \cr
-Performance measure(s) used to measure the model performance.}
+Performance measure(s) used to measure the model performance.
+Can also be a list of function with signature \code{function(y, pred, minimize)},
+where \code{y} and \code{pred} are vectors containing the true and the predicted values of the target,
+and \code{minimize} is a logical that defines if smaller values of the measure refer to better performance.}
 
 \item{minimize}{[\code{logical(1)}] \cr
-bla}
+Only needed if passed \code{measures} are functions measure.
+#FIXME: include minimize to signature of measure functions and remove here!!!}
+
+\item{predict.fun}{[\code{function}] \cr
+Only needed if \code{object} is not of class \code{WrappedModel} or \code{ResampleResult}.
+The signature must be \code{function(object, newdata)} and the function should always return a vector of predictions.
+The default \code{NULL} internally uses \code{predict(object, newdata = newdata)}.}
+
+\item{importance.fun}{[\code{function}] \cr
+Function with two arguments \code{function(permuted, unpermuted)} that defines how the permuted and unpermuted predictions are aggregated to a feature importance measure.
+The function takes the result of \code{\link{measurePerformance}} as input.
+The default \code{NULL} internally uses \code{unpermuted - permuted} which is the drop in performance.}
 
 \item{...}{Not used.}
 }
