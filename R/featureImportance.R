@@ -16,67 +16,74 @@
 #' @template arg_local
 #' @template arg_measures
 #' @param minimize [\code{logical(1)}] \cr
-#' bla
+#' Only needed if passed \code{measures} are functions measure.
+#' #FIXME: include minimize to signature of measure functions and remove here!!!
+#' @param predict.fun [\code{function}] \cr
+#' Only needed if \code{object} is not of class \code{WrappedModel} or \code{ResampleResult}.
+#' The signature must be \code{function(object, newdata)} and the function should always return a vector of predictions.
+#' The default \code{NULL} internally uses \code{predict(object, newdata = newdata)}.
+#' @param importance.fun [\code{function}] \cr
+#' Function with two arguments \code{function(permuted, unpermuted)} which defines how the permuted and unpermuted predictions are aggregated to a feature importance and takes the result of \code{\link{measurePerformance}}.
 #' @param ... Not used.
 #' @export
-featureImportance = function(object, data, features, target = NULL, n.feat.perm = 50,
-  local = FALSE, measures, minimize = NULL, predict.fun = NULL, importance.fun = NULL, ...) {
+featureImportance = function(object, data, features, target = NULL,
+  n.feat.perm = 50, local = FALSE, measures, minimize = NULL,
+  predict.fun = NULL, importance.fun = NULL, ...) {
   UseMethod("featureImportance")
 }
 
 #' @export
-featureImportance.WrappedModel = function(object, data, features, target = NULL, n.feat.perm = 50,
-  local = FALSE, measures, minimize = NULL, predict.fun = NULL, importance.fun = NULL, ...) {
+featureImportance.WrappedModel = function(object, data, features, target = NULL,
+  n.feat.perm = 50, local = FALSE, measures, minimize = NULL,
+  predict.fun = NULL, importance.fun = NULL, ...) {
   assertDataFrame(data)
   assertList(features, "character")
   assertNull(target)
-  #assertCharacter(target, null.ok = TRUE)
+  assertIntegerish(n.feat.perm, lower = 1)
+  assertFlag(local)
   if (inherits(measures, "Measure"))
     measures = list(measures)
   assertList(measures, "Measure")
   assertNull(minimize)
+  assertNull(predict.fun)
+
   minimize = BBmisc::vlapply(measures, function(x) x$minimize)
-  #assertLogical(minimize, null.ok = TRUE)
-  # if (!is.list(features))
-  #   features = list(features)
-  assertIntegerish(n.feat.perm, lower = 1)
-  assertFlag(local)
-
-  args = list(...)
-
-  if (local)
-    obs.id = args$obs.id else
-      obs.id = NULL
-
   ret = computeFeatureImportance(object, data, features, target, n.feat.perm,
-    local, measures, minimize, predict.fun, importance.fun, obs.id)
+    local, measures, minimize, predict.fun, importance.fun)
 
   return(ret)
 }
 
 #' @export
-featureImportance.ResampleResult = function(object, data, features, target = NULL, n.feat.perm = 50,
-  local = FALSE, measures, minimize = NULL, predict.fun = NULL, importance.fun = NULL, ...) {
-  assertClass(object, "ResampleResult")
+featureImportance.ResampleResult = function(object, data, features, target = NULL,
+  n.feat.perm = 50, local = FALSE, measures, minimize = NULL,
+  predict.fun = NULL, importance.fun = NULL, ...) {
+
   if (is.null(object$models))
     stop("Use 'models = TRUE' to create the ResampleResult.")
+
+  minimize = BBmisc::vlapply(measures, function(x) x$minimize)
+  obs.id = NULL
 
   # for each fold and each feature: permute the feature and measure performance on permuted feature
   ret = lapply(seq_along(object$models), function(i) {
     mod = object$models[[i]]
     train.ind = mod$subset
     test.ind = setdiff(seq_row(data), train.ind)
-    featureImportance(object = mod, data = data[test.ind, ], features = features,
-      measures = measures, n.feat.perm = n.feat.perm, local = local,
-      obs.id = test.ind)
+    if (local)
+      obs.id = test.ind
+    computeFeatureImportance(object = mod, data = data[test.ind, ], features = features,
+      measures = measures, minimize = minimize, n.feat.perm = n.feat.perm,
+      local = local, obs.id = obs.id)
   })
 
   data.table::rbindlist(ret, idcol = "cv.iter")
 }
 
 #' @export
-featureImportance.default = function(object, data, features, target = NULL, n.feat.perm = 50,
-  local = FALSE, measures, minimize = NULL, predict.fun = NULL, importance.fun = NULL, ...) {
+featureImportance.default = function(object, data, features, target = NULL,
+  n.feat.perm = 50, local = FALSE, measures, minimize = NULL,
+  predict.fun = NULL, importance.fun = NULL, ...) {
   assertDataFrame(data)
   assertCharacter(target, null.ok = TRUE)
   assertList(measures, "function", names = "strict")
@@ -89,20 +96,15 @@ featureImportance.default = function(object, data, features, target = NULL, n.fe
   assertFlag(local)
   assertFunction(predict.fun, args = c("object", "newdata"), null.ok = TRUE)
 
-  args = list(...)
-
-  if (local)
-    obs.id = args$obs.id else
-      obs.id = NULL
-
   ret = computeFeatureImportance(object, data, features, target, n.feat.perm,
-    local, measures, minimize, predict.fun, importance.fun, obs.id)
+    local, measures, minimize, predict.fun, importance.fun)
 
   return(ret)
 }
 
-computeFeatureImportance = function(object, data, features, target = NULL, n.feat.perm = 50,
-  local = FALSE, measures, minimize = NULL, predict.fun = NULL, importance.fun = NULL, obs.id = NULL) {
+computeFeatureImportance = function(object, data, features, target = NULL,
+  n.feat.perm = 50, local = FALSE, measures, minimize = NULL,
+  predict.fun = NULL, importance.fun = NULL, obs.id = NULL) {
 
   perf.true = measurePerformance(object, data = data, target = target,
     measures = measures, local = local, predict.fun = predict.fun)
@@ -118,7 +120,8 @@ computeFeatureImportance = function(object, data, features, target = NULL, n.fea
         importance.fun = importance.fun, obs.id = obs.id)
     })
     feat.imp = rbindlist(feat.imp)
-    feat.imp = cbind(data.table(features = features), feat.imp)
+    feat.imp = data.table(features = features, feat.imp)
+    # cbind(data.table(features = features), feat.imp)
     return(feat.imp)
   })
   data.table::rbindlist(imp, idcol = "n.feat.perm")

@@ -18,8 +18,8 @@ test_that("featureImportance with WrappedModel works", {
 
 context("featureImportance with ResampleResult works")
 test_that("featureImportance with ResampleResult works", {
-  n.feat.perm = 1
-  feat = features[1]
+  n.feat.perm = 2
+  feat = list(features[1:2], features[3:4])
 
   resampling = list(
     makeResampleInstance(makeResampleDesc("CV", iters = 2), task),
@@ -32,12 +32,12 @@ test_that("featureImportance with ResampleResult works", {
     d = getTaskData(task)
 
     perf.drop = featureImportance(res, data = d, features = feat, n.feat.perm = n.feat.perm, measures = measures, local = FALSE)
-    expect_data_table(perf.drop, nrows = rin$desc$iters*length(feat))
+    expect_data_table(perf.drop, nrows = rin$desc$iters*length(feat)*n.feat.perm)
     expect_set_equal(c("cv.iter", "features", "n.feat.perm", mid), colnames(perf.drop))
 
     perf.drop.local = featureImportance(res, data = d, features = feat, n.feat.perm = n.feat.perm, measures = measures, local = TRUE)
     n.test = length(unlist(rin$test.inds))
-    expect_data_table(perf.drop.local, nrows = length(feat)*n.test)
+    expect_data_table(perf.drop.local, nrows = length(feat)*n.test*n.feat.perm)
     expect_set_equal(c("cv.iter", "features", "n.feat.perm", "obs", mid), colnames(perf.drop.local))
     expect_set_equal(res$pred$data$id, perf.drop.local$obs)
   }
