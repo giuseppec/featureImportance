@@ -4,34 +4,41 @@
 \alias{featureImportance}
 \title{Feature Importance}
 \usage{
-featureImportance(object, data, target = NULL, measures, minimize = NULL,
-  features, n.feat.perm = 10, local = FALSE, predict.fun = NULL,
-  contrast.fun = NULL, ...)
+featureImportance(object, data, features, target = NULL, n.feat.perm = 50,
+  local = FALSE, measures, minimize = NULL, predict.fun = NULL,
+  importance.fun = NULL, ...)
 }
 \arguments{
-\item{object}{[\code{\link[mlr]{WrappedModel}} | \code{\link[mlr]{ResampleResult}}] \cr
-Currently either the trained \code{\link[mlr]{WrappedModel}} or a \code{\link[mlr]{ResampleResult}}.}
+\item{object}{[any] \cr
+Either a \code{\link[mlr]{WrappedModel}} or a \code{\link[mlr]{ResampleResult}}.
+You can also provide any other trained model (however, this is experimental and you need to provide an appropriate \code{predict.fun}).}
 
 \item{data}{[\code{data.frame}] \cr
 The data whose features will be shuffled in order to measure the performance drop.
-If \code{object} is of class \cr
-\code{ResampleResult}, you should use the corresponding data on which the resampling was performed \cr
-\code{WrappedModel}, you should use some independent test data that was not used to fit the model (although you could also use the train data here).}
+If \code{object} is of class \code{ResampleResult}, you should use the corresponding data on which the whole resampling was performed. In any other case, you might use some independent test data that was not used to fit the model (although you could also use the train data here).}
 
-\item{measures}{[\code{\link[mlr]{Measure}} | list of \code{\link[mlr]{Measure}}] \cr
-Performance measure(s) used to measure the drop in performance.}
+\item{features}{[list of \code{character}] \cr
+A list where each element contains the names of at least one feature for which the permutation importance is computed.
+If a list element contains two or more features, they will be permuted block-wise (without breaking the relationship between those features).}
 
-\item{features}{[\code{character}] \cr
-A vector of features for which the importance should be computed.}
+\item{target}{[\code{character(1)}] \cr
+Only needed if \code{object} is not of class \code{WrappedModel} or \code{ResampleResult}.
+Name of the target feature to be predicted.}
 
 \item{n.feat.perm}{[\code{numeric(1)}] \cr
-The number of Monte-Carlo iterations, e.g. number of permutations of the feature(s) to compute the feature importance.
-The default is 10.}
+The number of permutations of the feature(s) used to compute the feature importance.
+The default is 50.}
 
 \item{local}{[\code{logical(1)}] \cr
-Should observation-wise importance be computed?
+Should the performance (or the feature importance) be computed observation-wise?
 Note that not all measures support this (e.g. one can not compute the AUC for one observation).
 The default is FALSE.}
+
+\item{measures}{[\code{\link[mlr]{Measure}} | list of \code{\link[mlr]{Measure}} | \code{function} | list of \code{function}] \cr
+Performance measure(s) used to measure the model performance.}
+
+\item{minimize}{[\code{logical(1)}] \cr
+bla}
 
 \item{...}{Not used.}
 }

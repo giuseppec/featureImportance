@@ -8,8 +8,9 @@ shapleyImportance(object, data, target, features, measures, m = "all.unique",
   n.feat.perm = 10, local = FALSE)
 }
 \arguments{
-\item{object}{[\code{\link[mlr]{WrappedModel}} | \code{\link[mlr]{ResampleResult}}] \cr
-Currently either the trained \code{\link[mlr]{WrappedModel}} or a \code{\link[mlr]{ResampleResult}}.}
+\item{object}{[any] \cr
+Either a \code{\link[mlr]{WrappedModel}} or a \code{\link[mlr]{ResampleResult}}.
+You can also provide any other trained model (however, this is experimental and you need to provide an appropriate \code{predict.fun}).}
 
 \item{target}{[\code{character(1)}] \cr
 The target feature.}
@@ -17,18 +18,18 @@ The target feature.}
 \item{features}{[\code{character}] \cr
 the feature(s) for which the shapley importance should be computed.}
 
-\item{measures}{[\code{\link[mlr]{Measure}} | list of \code{\link[mlr]{Measure}}] \cr
-Performance measure(s) used to measure the drop in performance.}
+\item{measures}{[\code{\link[mlr]{Measure}} | list of \code{\link[mlr]{Measure}} | \code{function} | list of \code{function}] \cr
+Performance measure(s) used to measure the model performance.}
 
 \item{m}{[\code{numeric(1)} | \code{"all.unique"}] \cr
 the number of permutations that should be used. If m > number of all unique permutatios then only all unique permutations are used. Default is \code{"all.unique"}.}
 
 \item{n.feat.perm}{[\code{numeric(1)}] \cr
-The number of Monte-Carlo iterations, e.g. number of permutations of the feature(s) to compute the feature importance.
-The default is 10.}
+The number of permutations of the feature(s) used to compute the feature importance.
+The default is 50.}
 
 \item{local}{[\code{logical(1)}] \cr
-Should observation-wise importance be computed?
+Should the performance (or the feature importance) be computed observation-wise?
 Note that not all measures support this (e.g. one can not compute the AUC for one observation).
 The default is FALSE.}
 }
