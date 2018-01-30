@@ -28,6 +28,11 @@
 featureImportance = function(object, data, features, target = NULL,
   n.feat.perm = 50, local = FALSE, measures, minimize = NULL,
   predict.fun = NULL, importance.fun = NULL, ...) {
+  assertDataFrame(data)
+  assertList(features, "character")
+  assertIntegerish(n.feat.perm, lower = 1L)
+  assertFlag(local)
+  assertFunction(importance.fun, args = c("permuted", "unpermuted"), null.ok = TRUE)
   UseMethod("featureImportance")
 }
 
@@ -35,17 +40,12 @@ featureImportance = function(object, data, features, target = NULL,
 featureImportance.WrappedModel = function(object, data, features, target = NULL,
   n.feat.perm = 50, local = FALSE, measures, minimize = NULL,
   predict.fun = NULL, importance.fun = NULL, ...) {
-  assertDataFrame(data)
-  assertList(features, "character")
   assertNull(target)
-  assertIntegerish(n.feat.perm, lower = 1)
-  assertFlag(local)
   if (inherits(measures, "Measure"))
     measures = list(measures)
   assertList(measures, "Measure")
   assertNull(minimize)
   assertNull(predict.fun)
-  assertFunction(importance.fun, args = c("permuted", "unpermuted"))
 
   minimize = BBmisc::vlapply(measures, function(x) x$minimize)
   ret = computeFeatureImportance(object, data, features, target, n.feat.perm,
@@ -63,15 +63,17 @@ featureImportance.ResampleResult = function(object, data, features, target = NUL
     stop("Use 'models = TRUE' to create the ResampleResult.")
 
   minimize = BBmisc::vlapply(measures, function(x) x$minimize)
-  obs.id = NULL
 
   # for each fold and each feature: permute the feature and measure performance on permuted feature
   ret = lapply(seq_along(object$models), function(i) {
     mod = object$models[[i]]
     train.ind = mod$subset
     test.ind = setdiff(seq_row(data), train.ind)
-    if (local)
+    if (local) {
       obs.id = test.ind
+    } else {
+      obs.id = NULL
+    }
     computeFeatureImportance(object = mod, data = data[test.ind, ], features = features,
       measures = measures, minimize = minimize, n.feat.perm = n.feat.perm,
       local = local, obs.id = obs.id)
@@ -84,16 +86,9 @@ featureImportance.ResampleResult = function(object, data, features, target = NUL
 featureImportance.default = function(object, data, features, target = NULL,
   n.feat.perm = 50, local = FALSE, measures, minimize = NULL,
   predict.fun = NULL, importance.fun = NULL, ...) {
-  assertDataFrame(data)
   assertCharacter(target, null.ok = TRUE)
   assertList(measures, "function", names = "strict")
-  #lapply(measures, assertFunction, args = c("truth", "response"))
   assertLogical(minimize, names = "strict", len = length(measures))
-  if (!is.list(features))
-    features = list(features)
-  assertList(features, "character")
-  assertIntegerish(n.feat.perm, lower = 1)
-  assertFlag(local)
   assertFunction(predict.fun, args = c("object", "newdata"), null.ok = TRUE)
 
   ret = computeFeatureImportance(object, data, features, target, n.feat.perm,
@@ -105,6 +100,9 @@ featureImportance.default = function(object, data, features, target = NULL,
 computeFeatureImportance = function(object, data, features, target = NULL,
   n.feat.perm = 50, local = FALSE, measures, minimize = NULL,
   predict.fun = NULL, importance.fun = NULL, obs.id = NULL) {
+
+  if (local & is.null(obs.id))
+    obs.id = seq_row(data)
 
   unpermuted.perf = measurePerformance(object, data = data, target = target,
     measures = measures, local = local, predict.fun = predict.fun)
@@ -119,9 +117,9 @@ computeFeatureImportance = function(object, data, features, target = NULL,
       measureFeatureImportance(permuted.perf, unpermuted.perf, minimize = minimize,
         importance.fun = importance.fun, obs.id = obs.id)
     })
-    feat.imp = rbindlist(feat.imp)
-    feat.imp = data.table(features = features, feat.imp)
-    # cbind(data.table(features = features), feat.imp)
+    feat.imp = rbindlist(feat.imp, idcol = "features")
+    # replace the feature id with its corresponding feature set
+    feat.imp$features = features[feat.imp$features]
     return(feat.imp)
   })
   data.table::rbindlist(imp, idcol = "n.feat.perm")

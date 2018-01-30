@@ -15,9 +15,20 @@ measureFeatureImportance = function(permuted.perf, unpermuted.perf, minimize,
     stop("'obs.id' has different length")
 
   fi = lapply(seq_along(minimize), function(i)
-    importance.fun(permuted.perf[,i], unpermuted.perf[,i], minimize[i]))
-  fi = setNames(fi, colnames(unpermuted.perf))
+    importance.fun(permuted.perf[[i]], unpermuted.perf[[i]], minimize[i]))
+
+  if (!is.null(obs.id)) {
+    fi = c(list(obs.id), fi)
+    cols = c("obs", colnames(unpermuted.perf))
+  } else {
+    cols = colnames(unpermuted.perf)
+  }
+
+  fi = setnames(as.data.table(fi), cols)
+  #fi = setNames(fi, colnames(unpermuted.perf))
   #fi = as.data.frame(fi, stringsAsFactors = FALSE)
+  #data.table(obs = obs.id, as.data.table(fi))
   #fi$obs = obs.id
-  data.table(obs = obs.id, as.data.table(fi))
+
+  return(fi)
 }

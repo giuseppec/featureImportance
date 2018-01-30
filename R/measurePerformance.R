@@ -29,9 +29,11 @@ measurePerformance.WrappedModel = function(object, data, target = NULL, measures
     perf = lapply(seq_along(p2), function(i) {
       mlr::performance(p2[[i]], measures)
     })
-    perf = as.data.frame(transpose(perf), col.names = names(perf[[1]]), stringsAsFactors = FALSE)
+    perf = setnames(as.data.table(transpose(perf)), names(perf[[1]]))
+    #as.data.frame(transpose(perf), col.names = names(perf[[1]]), stringsAsFactors = FALSE)
   } else {
-    perf = as.data.frame(t(mlr::performance(p, measures)), stringsAsFactors = FALSE)
+    perf = as.data.table(t(mlr::performance(p, measures)))
+    #as.data.frame(t(mlr::performance(p, measures)), stringsAsFactors = FALSE)
   }
   return(perf)
 }
@@ -60,8 +62,9 @@ measurePerformance.default = function(object, data, target = NULL, measures,
       measures.fun(truth = truth, response = p)
     })
   }
-  perf = setNames(perf, names(measures))
-  perf = as.data.frame(perf, stringsAsFactors = FALSE)
+  # perf = setNames(perf, names(measures))
+  # perf = as.data.frame(perf, stringsAsFactors = FALSE)
+  perf = as.data.table(perf)
   return(perf)
 }
 

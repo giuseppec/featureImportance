@@ -3,7 +3,7 @@ nullImportanceIteration = function(i, learner, task, resampling, measures, n.fea
   target = mlr::getTaskTargetNames(task)
   # FIXME: maybe do not use unexported changeData here, can be problematic on CRAN
   task.null = mlr:::changeData(task, data = permuteFeature(d, target))
-  fi = featureImportance(learner = learner, task.null, resampling = resampling,
+  fi = featureImportanceLearner(learner = learner, task.null, resampling = resampling,
     measures = measures, n.feat.perm = n.feat.perm)
   fi$importance
 }
