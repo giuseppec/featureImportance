@@ -21,15 +21,14 @@ test_that("featureImportanceLearner works", {
     expect_set_equal(c("cv.iter", "features", "n.feat.perm", mid), colnames(imp$importance))
 
     imp.local = featureImportanceLearner(learner, task, rin, features = feat, n.feat.perm = n.feat.perm, measures = measures, local = TRUE)
-    # imp.local2 = lapply(feat, function(f) {
-    #   featureImportanceLearner(learner, task, rin, features = list(f), n.feat.perm = n.feat.perm, measures = measures, local = TRUE)
-    # })
+    res = imp.local$resample
+    imp.local = imp.local$importance
 
     nrow = length(feat)*length(unlist(rin$test.inds))*n.feat.perm
 
     expect_data_table(imp.local, nrows = nrow)
     expect_equal(imp.local$acc, imp.local$mmce)
-    expect_equal(unique(imp.local$features), feat)
+    expect_equal(stri_split_fixed(unique(imp.local$features), ","), feat)
     expect_set_equal(colnames(imp.local), c("cv.iter", "features", "n.feat.perm", "obs", mid))
     expect_set_equal(res$pred$data$id, imp.local$obs)
   }

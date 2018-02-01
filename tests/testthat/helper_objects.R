@@ -5,3 +5,7 @@ mod = train(learner, task)
 features = getTaskFeatureNames(task)
 target = getTaskTargetNames(task)
 d = getTaskData(task)
+
+measures = list(acc, mmce)
+mid = BBmisc::vcapply(measures, function(x) x$id)
+measure.fun = list(acc = measureACC, mmce = measureMMCE)

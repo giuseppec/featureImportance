@@ -25,10 +25,6 @@ measureFeatureImportance = function(permuted.perf, unpermuted.perf, minimize,
   }
 
   fi = setnames(as.data.table(fi), cols)
-  #fi = setNames(fi, colnames(unpermuted.perf))
-  #fi = as.data.frame(fi, stringsAsFactors = FALSE)
-  #data.table(obs = obs.id, as.data.table(fi))
-  #fi$obs = obs.id
 
   return(fi)
 }

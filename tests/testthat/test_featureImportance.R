@@ -2,8 +2,6 @@ context("featureImportance with WrappedModel works")
 test_that("featureImportance with WrappedModel works", {
   n.feat.perm = 2
   feat = as.list(features)
-  measures = list(acc, mmce)
-  mid = BBmisc::vcapply(measures, function(x) x$id)
   # minimize = !BBmisc::vlapply(measures, function(x) x$minimize)
 
   set.seed(1)
@@ -12,7 +10,7 @@ test_that("featureImportance with WrappedModel works", {
   expect_data_table(imp, nrows = nrow)
   expect_set_equal(colnames(imp), c("features", "n.feat.perm", mid))
   expect_equal(imp$acc, imp$mmce)
-  expect_equal(unique(imp$features), feat)
+  expect_equal(stri_split_fixed(unique(imp$features), ","), feat)
 
   # check if using mod$learner.model yields the same importances
   measures.fun = list(acc = measureACC, mmce = measureMMCE)
@@ -31,15 +29,13 @@ test_that("featureImportance with WrappedModel works", {
   expect_data_table(imp, nrows = nrow)
   expect_set_equal(colnames(imp), c("features", "n.feat.perm", "obs", mid))
   expect_equal(imp$acc, imp$mmce)
-  expect_equal(unique(imp$features), feat)
+  expect_equal(stri_split_fixed(unique(imp$features), ","), feat)
 })
 
 context("featureImportance with ResampleResult works")
 test_that("featureImportance with ResampleResult works", {
   n.feat.perm = 2
   feat = list(features[1:2], features[3:4])
-  measures = list(acc, mmce)
-  mid = BBmisc::vcapply(measures, function(x) x$id)
 
   resampling = list(
     makeResampleInstance(makeResampleDesc("CV", iters = 2), task),
@@ -62,7 +58,7 @@ test_that("featureImportance with ResampleResult works", {
 
     expect_data_table(imp.local, nrows = nrow)
     expect_equal(imp.local$acc, imp.local$mmce)
-    expect_equal(unique(imp.local$features), feat)
+    expect_equal(stri_split_fixed(unique(imp.local$features), ","), feat)
     expect_set_equal(colnames(imp.local), c("cv.iter", "features", "n.feat.perm", "obs", mid))
     expect_set_equal(res$pred$data$id, imp.local$obs)
   }

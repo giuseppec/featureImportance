@@ -5,7 +5,7 @@
 \title{Shapley Importance}
 \usage{
 shapleyImportance(object, data, target, features, measures, m = "all.unique",
-  n.feat.perm = 10, local = FALSE)
+  n.feat.perm = 50, local = FALSE)
 }
 \arguments{
 \item{object}{[any] \cr
@@ -20,9 +20,8 @@ the feature(s) for which the shapley importance should be computed.}
 
 \item{measures}{[\code{\link[mlr]{Measure}} | list of \code{\link[mlr]{Measure}} | \code{function} | list of \code{function}] \cr
 Performance measure(s) used to measure the model performance.
-Can also be a list of function with signature \code{function(y, pred, minimize)},
-where \code{y} and \code{pred} are vectors containing the true and the predicted values of the target,
-and \code{minimize} is a logical that defines if smaller values of the measure refer to better performance.}
+Can also be a named list of function with signature \code{function(y, pred)},
+where \code{y} and \code{pred} are vectors containing the true and the predicted values of the target.}
 
 \item{m}{[\code{numeric(1)} | \code{"all.unique"}] \cr
 the number of permutations that should be used. If m > number of all unique permutatios then only all unique permutations are used. Default is \code{"all.unique"}.}

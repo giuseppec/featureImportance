@@ -86,7 +86,7 @@ splitPrediction = function(p, f) {
 #     data = replicate(n.feat.perm, {
 #       permuteFeature(data, feature)
 #     }, simplify = FALSE)
-#     data = as.data.frame(data.table::rbindlist(data, idcol = "n.feat.perm"), stringsAsFactors = FALSE)
+#     data = as.data.frame(rbindlist(data, idcol = "n.feat.perm"), stringsAsFactors = FALSE)
 #   }
 #   p = predict(mod, newdata = data)
 #   #pred.data = split(p$data, data$n.feat.perm)

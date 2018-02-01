@@ -36,13 +36,12 @@ The default is FALSE.}
 
 \item{measures}{[\code{\link[mlr]{Measure}} | list of \code{\link[mlr]{Measure}} | \code{function} | list of \code{function}] \cr
 Performance measure(s) used to measure the model performance.
-Can also be a list of function with signature \code{function(y, pred, minimize)},
-where \code{y} and \code{pred} are vectors containing the true and the predicted values of the target,
-and \code{minimize} is a logical that defines if smaller values of the measure refer to better performance.}
+Can also be a named list of function with signature \code{function(y, pred)},
+where \code{y} and \code{pred} are vectors containing the true and the predicted values of the target.}
 
-\item{minimize}{[\code{logical(1)}] \cr
-Only needed if passed \code{measures} are functions measure.
-#FIXME: include minimize to signature of measure functions and remove here!!!}
+\item{minimize}{[named \code{logical}] \cr
+Only needed if passed \code{measures} is a named list of functions.
+A named logical of the same length and with the same names as \code{measures} answering the question if smaller values of the measure refer to a better model performance.}
 
 \item{predict.fun}{[\code{function}] \cr
 Only needed if \code{object} is not of class \code{WrappedModel} or \code{ResampleResult}.

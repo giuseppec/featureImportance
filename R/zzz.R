@@ -4,7 +4,7 @@
 #' @import mlr
 #' @import parallelMap
 #' @import stringi
-#' @importFrom stats predict setNames
+#' @importFrom stats predict setNames var
 
 .onAttach = function(libname, pkgname) {
   parallelMap::parallelRegisterLevels(package = "featureImportance",

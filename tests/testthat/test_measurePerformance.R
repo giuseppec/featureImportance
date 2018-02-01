@@ -1,5 +1,5 @@
-test_that("measurePerformance and measurePerformanceDrop", {
-  context("measurePerformance works")
+context("measurePerformance works")
+test_that("measurePerformance works", {
   # check if measure performance works with WrappedModel
   perf = measurePerformance(mod, data = d, measures = measures, local = FALSE)
   expect_data_frame(perf, nrows = 1, ncols = length(measures))
@@ -10,7 +10,6 @@ test_that("measurePerformance and measurePerformanceDrop", {
   expect_set_equal(colnames(perf.local), mid)
 
   # check if measure performance works with non-WrappedModel
-  measure.fun = list(acc = measureACC, mmce = measureMMCE)
   perf = measurePerformance(mod$learner.model, data = d, target = target, measures = measure.fun, local = FALSE,
     predict.fun = function(object, newdata) predict(object, newdata, type = "class"))
   expect_data_frame(perf, nrows = 1, ncols = length(measure.fun))

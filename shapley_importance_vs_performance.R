@@ -24,6 +24,8 @@ mod = train(learner, task)
 data = getTaskData(task)
 features = getTaskFeatureNames(task)
 target = getTaskTargetNames(task)
+measures = list(acc, mmce)
+mid = BBmisc::vcapply(measures, function(x) x$id)
 
 # calculateValueFunction = function(features){
 #   val = list(c("1", "3"), c("2", "3"), c("1", "2", "3"))
@@ -32,40 +34,36 @@ target = getTaskTargetNames(task)
 #       return(0)
 # }
 
+# generate all permutations
 perm = generatePermutations(features)
-mc = generateMarginalContribution("x.3", perm)
-as.data.table(mc)
 
+# generate all marginal contribution sets for each feature
+mc = lapply(features, function(x) generateMarginalContribution(x, perm))
+mc = unlist(mc, recursive = FALSE)
 
-
-mc = c(
-  generateMarginalContribution("x.1", perm),
-  generateMarginalContribution("x.2", perm),
-  generateMarginalContribution("x.3", perm),
-  generateMarginalContribution("x.4", perm))
+# get all unique sets
 values = unique(unname(unlist(mc, recursive = FALSE)))
 
+# compute value function based on importance
 value.function = lapply(values, function(f) {
-  calculateValueFunction(object = mod, data = data, measures = measures,
+  calculateValueFunctionImportance(object = mod, data = data, measures = measures,
     n.feat.perm = 5, local = FALSE, features = f)
 })
 vf = rbindlist(value.function)
-vf$features = values
+vf$features = stri_paste_list(values, ",")
 
+# compute value function based on performance
 value.function2 = lapply(values, function(f) {
-  calculateValueFunction2(object = mod, data = data, measures = measures,
-    n.feat.perm = 5, local = FALSE, features = f)
+  calculateValueFunctionPerformance(object = mod, data = data, measures = measures,
+    target = "classes", n.feat.perm = 5, local = FALSE, features = f)
 })
 vf2 = rbindlist(value.function2)
-vf2$features = values
+vf2$features = stri_paste_list(values, ",")
 
-mc = generateMarginalContribution("x.4", perm)
-val = getMarginalContributionValues(mc, vf)
-val2 = getMarginalContributionValues(mc, vf2)
+#
+mc = generateMarginalContribution("x.1", perm)
+getShapleyImportance(getMarginalContributionValues(mc, vf), measures = measures)
+getShapleyImportance(getMarginalContributionValues(mc, vf2), measures = measures)
 
-getShapleyImportance(val, measures = measures)
-getShapleyImportance(val2, measures = measures)
-
-#vnapply(mc, function(x) calculateValueFunction(x$with.f) - calculateValueFunction(x$without.f))
-#mean(vnapply(mc, function(x) calculateValueFunction(x$with.f) - calculateValueFunction(x$without.f)))
-
+s = shapleyImportance(object = mod, data = data, measures = measures,
+  target = "classes", n.feat.perm = 5, local = FALSE, features = features)

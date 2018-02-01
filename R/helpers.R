@@ -6,12 +6,24 @@ permuteFeature = function(data, features, keep.fixed = NULL) {
   #assertSubset(features, colnames(data))
   # FIXME: do we want to permute the whole block-matrix of features or permute each single feature separately? Here we permute the block-matrix containing all features in 'features'.
   if (length(features) == 1) {
+    if (is.na(features))
+      return(data)
     data[, features] = sample(data[, features])
   } else {
+    features = features[!is.na(features)]
     idx = sample(seq_row(data))
     data[, features] = data[idx, features]
   }
   return(data)
+}
+
+assertMeasure = function(measures) {
+  if (inherits(measures, "Measure"))
+    measures = list(measures)
+  assertList(measures, "Measure")
+  mid = BBmisc::vcapply(measures, function(x) x$id)
+  measures = setNames(measures, mid)
+  return(measures)
 }
 
 # permuteFeature2 = function(data, feature) {

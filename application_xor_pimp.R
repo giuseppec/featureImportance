@@ -39,7 +39,7 @@ task = makeClassifTask(data = cbind(d, X.noisy), target = "classes")
 #
 library(OpenML)
 #task = pid.task
-task = convertOMLDataSetToMlr(getOMLDataSet(150))
+#task = convertOMLDataSetToMlr(getOMLDataSet(150))
 
 d = getTaskData(task)
 #resampling = makeResampleInstance(makeResampleDesc("CV", iter = 10, stratify = TRUE), task)
@@ -50,15 +50,11 @@ parallelStartSocket(30)
 #parallelExport("permuteFeature", "featureImportance", "performanceDrop")
 parallelLibrary("checkmate", "BBmisc", "mlr", "featureImportance")
 feat.names = getTaskFeatureNames(task)
-feat.imp = featureImportance(learner, task, resampling, measures, n.feat.perm = 100)
+feat.imp = featureImportanceLearner(learner, task, resampling, measures, n.feat.perm = 100)
 imp = feat.imp$importance[, lapply(.SD, mean), .SDcols = "acc", by = c("features")]
-#imp$lo = feat.imp$importance[, lapply(.SD, quantile, c(0.05)), .SDcols = "acc", by = c("features")]$acc
-#imp$up = feat.imp$importance[, lapply(.SD, quantile, c(0.95)), .SDcols = "acc", by = c("features")]$acc
 imp
-#null = nullImportance(learner, task, resampling, measures, n.feat.perm = 10, n.target.perm = 100)
-#null2 = null[, lapply(.SD, mean), .SDcols = "acc", by = c("features", "n.feat.perm", "n.target.perm")]
-#null3 = null[, lapply(.SD, mean), .SDcols = "acc", by = c("features", "n.target.perm")]
-null = nullImportance(learner, task, resampling, measures, n.feat.perm = 1, n.target.perm = 100)
+
+null = nullImportance(learner, task, resampling, measures, n.feat.perm = 100, n.target.perm = 100)
 null2 = null[, lapply(.SD, mean), .SDcols = "acc", by = c("features", "n.feat.perm", "n.target.perm")]
 parallelStop()
 
