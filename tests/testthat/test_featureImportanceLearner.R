@@ -2,8 +2,6 @@ context("featureImportanceLearner works")
 test_that("featureImportanceLearner works", {
   n.feat.perm = 2
   feat = list(features[1:2], features[3:4])
-  measures = list(acc, mmce)
-  mid = BBmisc::vcapply(measures, function(x) x$id)
 
   resampling = list(
     makeResampleInstance(makeResampleDesc("CV", iters = 2), task),

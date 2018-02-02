@@ -43,17 +43,10 @@ featureImportance.WrappedModel = function(object, data, features, target = NULL,
   assertNull(minimize)
   assertNull(predict.fun)
 
-  mid = BBmisc::vcapply(measures, function(x) x$id)
   minimize = BBmisc::vlapply(measures, function(x) x$minimize)
   imp = computeFeatureImportance(object, data, features, target, n.feat.perm,
     local, measures, minimize, predict.fun, importance.fun)
 
-  # makeS3Obj(
-  #   classes = "featureImportance",
-  #   importance = imp,
-  #   resample = NULL,
-  #   measures = setNames(measures, mid)
-  # )
   return(imp)
 }
 
@@ -65,7 +58,6 @@ featureImportance.ResampleResult = function(object, data, features, target = NUL
   if (is.null(object$models))
     stop("Use 'models = TRUE' to create the ResampleResult.")
 
-  mid = BBmisc::vcapply(measures, function(x) x$id)
   minimize = BBmisc::vlapply(measures, function(x) x$minimize)
   # for each fold and each feature: permute the feature and measure performance on permuted feature
   ret = lapply(seq_along(object$models), function(i) {
@@ -84,12 +76,6 @@ featureImportance.ResampleResult = function(object, data, features, target = NUL
 
   imp = rbindlist(ret, idcol = "cv.iter")
 
-  # makeS3Obj(
-  #   classes = "featureImportance",
-  #   importance = imp,
-  #   resample = object,
-  #   measures = setNames(measures, mid)
-  # )
   return(imp)
 }
 
@@ -108,12 +94,6 @@ featureImportance.default = function(object, data, features, target = NULL,
   imp = computeFeatureImportance(object, data, features, target, n.feat.perm,
     local, measures, minimize, predict.fun, importance.fun)
 
-  # makeS3Obj(
-  #   classes = "featureImportance",
-  #   importance = imp,
-  #   resample = NULL,
-  #   measures = measures
-  # )
   return(imp)
 }
 

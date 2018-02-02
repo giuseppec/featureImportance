@@ -3,6 +3,22 @@ library(BBmisc)
 library(mlr)
 load_all("pkg")
 
+nullImportanceIterationRF = function(i, learner, task, resampling, measures) {
+  d = mlr::getTaskData(task)
+  target = mlr::getTaskTargetNames(task)
+  # FIXME: maybe do not use unexported changeData here, can be problematic on CRAN
+  task.null = mlr:::changeData(task, data = permuteFeature(d, target))
+  mod = train(learner, task.null)
+  #getFeatureImportance(mod, "permutation", type = 1, scale = FALSE)$res
+  as.data.frame(t(randomForest::importance(mod$learner.model, type = 1, scale = FALSE)))
+}
+
+nullImportanceRF = function(learner, task, resampling, measures, n.target.perm = 1) {
+  args = list(learner = learner, task = task)
+  ret = parallelMap::parallelMap(nullImportanceIterationRF, i = seq_len(n.target.perm), more.args = args)
+  rbindlist(ret, idcol = "n.target.perm")
+}
+
 pvalue = function(null, imp, measure.id = "acc") {
   null = as.data.frame(null)
   imp = as.data.frame(imp)
@@ -35,11 +51,8 @@ n = 2
 dim = ncol(d) - 1
 X.noisy = setColNames(replicate(n = 2, runif(getTaskSize(task))), paste0("x.", dim + 1:n))
 task = makeClassifTask(data = cbind(d, X.noisy), target = "classes")
-
 #
-library(OpenML)
-#task = pid.task
-#task = convertOMLDataSetToMlr(getOMLDataSet(150))
+task = pid.task
 
 d = getTaskData(task)
 #resampling = makeResampleInstance(makeResampleDesc("CV", iter = 10, stratify = TRUE), task)
@@ -50,16 +63,19 @@ parallelStartSocket(30)
 #parallelExport("permuteFeature", "featureImportance", "performanceDrop")
 parallelLibrary("checkmate", "BBmisc", "mlr", "featureImportance")
 feat.names = getTaskFeatureNames(task)
-feat.imp = featureImportanceLearner(learner, task, resampling, measures, n.feat.perm = 100)
+feat.imp = featureImportanceLearner(learner, task, resampling, measures, n.feat.perm = 5)
 imp = feat.imp$importance[, lapply(.SD, mean), .SDcols = "acc", by = c("features")]
 imp
 
-null = nullImportance(learner, task, resampling, measures, n.feat.perm = 100, n.target.perm = 100)
+null = nullImportance(learner, task, resampling, measures, n.feat.perm = 5, n.target.perm = 100)
 null2 = null[, lapply(.SD, mean), .SDcols = "acc", by = c("features", "n.feat.perm", "n.target.perm")]
+
+p2 = pimp(learner, task, resampling, measures, n.feat.perm = 5, n.target.perm = 100)
 parallelStop()
 
 p = pvalue(null2, imp, measure.id = "acc")
 (p = sort(vnapply(p, function(x) x$p.value)))
+p2
 
 i = 3
 plot(density(p[[i]]$null.dist), main = names(p)[i])

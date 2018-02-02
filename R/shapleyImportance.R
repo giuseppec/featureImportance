@@ -2,22 +2,27 @@
 #'
 #' @description Computes the shapley importance of a feature.
 #'
+#' @template arg_object
+#' @template arg_data
 #' @param features [\code{character}] \cr
 #' the feature(s) for which the shapley importance should be computed.
-#' @param m [\code{numeric(1)} | \code{"all.unique"}] \cr
-#' the number of permutations that should be used. If m > number of all unique permutatios then only all unique permutations are used. Default is \code{"all.unique"}.
-#' @template arg_object
 #' @param target [\code{character(1)}] \cr
 #' The target feature.
-#' @template arg_measures
 #' @template arg_n.feat.perm
+#' @param n.shapley.perm [\code{numeric(1)} | \code{"all.unique"}] \cr
+#' The number of permutations that should be used for the shapley value.
+#' If n.shapley.perm > number of all unique permutatios then only all unique permutations are used.
+#' Default is \code{"all.unique"}.
+#' @template arg_measures
+#' @param value.function [\code{function}] \cr
+#' Function that defines the value function which is used to compute the shapley value.
 #' @export
 shapleyImportance = function(object, data, features, target, n.feat.perm = 50,
-  measures, m = "all.unique", value.function = calculateValueFunctionImportance) {
-
+  n.shapley.perm = "all.unique", measures, value.function = calculateValueFunctionImportance) {
+  assertSubset(target, colnames(data))
+  measures = assertMeasure(measures)
   all.feats = setdiff(colnames(data), target)
-
-  perm = generatePermutations(all.feats, m = m)
+  perm = generatePermutations(all.feats, n.shapley.perm = n.shapley.perm)
 
   # generate all marginal contribution sets for features where we want to compute the shapley importance
   mc.list = lapply(features, function(x) generateMarginalContribution(x, perm))
@@ -73,18 +78,18 @@ print.ShapleyImportance = function(x, ...) {
 # single feature for wich marginal contributions are computed using permutations in 'perm'
 # @param perm list of permutations that are used to compute marginal contributions for
 
-# generate m permutations for alle elements in features
-generatePermutations = function(features, m = "all.unique") {
+# generate n.shapley.perm permutations for alle elements in features
+generatePermutations = function(features, n.shapley.perm = "all.unique") {
   assertCharacter(features)
-  assert(checkSubset(m, "all.unique"), checkIntegerish(m, lower = 1))
+  assert(checkSubset(n.shapley.perm, "all.unique"), checkIntegerish(n.shapley.perm, lower = 1))
   n.feat = length(features)
 
-  if (m == "all.unique" | (m >= factorial(n.feat))) {
+  if (n.shapley.perm == "all.unique" | (n.shapley.perm >= factorial(n.feat))) {
     messagef("All %s unique permuatations for the %s features were generated!", factorial(n.feat), n.feat)
     p = e1071::permutations(n.feat)
     p = lapply(seq_row(p), function(i) features[p[i,]])
   } else {
-    p = lapply(1:m, function(x) sample(features))
+    p = lapply(1:n.shapley.perm, function(x) sample(features))
   }
   return(p)
 }
@@ -101,7 +106,7 @@ generateMarginalContribution = function(f, perm) {
       without.f = new.feature.order[1:(f.ind - 1)]
       with.f = c(without.f, f)
     }
-    return(list(with.f = with.f, without.f = without.f.NA))
+    return(list(with.f = with.f, without.f = without.f))
   })
 }
 
@@ -110,35 +115,40 @@ calculateValueFunctionImportance = function(features, object, data, target = NUL
   assertCharacter(features)
   features = list(features) # compute importance for whole block
   measures = assertMeasure(measures)
-  assertNull(target)
+  #assertNull(target)
 
   # FIXME: allow measures to be also functions
-  mid = BBmisc::vcapply(measures, function(x) x$id)
+  mid = names(measures)
   imp = featureImportance(object = object, data = data, features = features,
     measures = measures, n.feat.perm = n.feat.perm)
   # aggregate importance
-  imp.aggr = ret[, lapply(.SD, mean), .SDcols = mid, by = "features"]
+  imp.aggr = imp[, lapply(.SD, mean), .SDcols = mid, by = "features"]
   return(imp.aggr)
 }
 
 calculateValueFunctionPerformance = function(features, object, data, target, measures,
   n.feat.perm = 50, predict.fun = NULL) {
   assertCharacter(features)
-  features = list(features) # compute importance for whole block
   assertSubset(target, colnames(data))
+  measures = assertMeasure(measures)
 
-  mid = BBmisc::vcapply(measures, function(x) x$id)
+  mid = names(measures)
   all.feats = setdiff(colnames(data), target)
   # shuffle all features except the ones for which we want to compute the value function
   shuffle.features = setdiff(all.feats, features)
   # compute the value function
   ret = measurePerformance(object, data = permuteFeature(data, features = shuffle.features),
     target = target, measures = measures, predict.fun = predict.fun)
-  empty.set = measurePerformance(object, data = permuteFeature(data, features = all.feats),
-    target = target, measures = measures, predict.fun = predict.fun)
-
+  minimize = BBmisc::vlapply(measures, function(x) x$minimize)
+  if (nrow(ret) != 1)
+    stopf("'ret' should be only one row.")
+  ret = ifelse(minimize, -1, 1)*ret
+  # we can remove empty.set which is always substracted as we use differences of value functions
+  #empty.set = measurePerformance(object, data = permuteFeature(data, features = all.feats),
+  #  target = target, measures = measures, predict.fun = predict.fun)
   # FIXME: ret - empty.set when measure should be maximized
-  return(empty.set - ret)
+  #return(empty.set - ret)
+  return(ret)
 }
 
 getMarginalContributionValues = function(mc, vf) {
@@ -158,11 +168,13 @@ getMarginalContributionValues = function(mc, vf) {
 }
 
 getShapleyImportance = function(mc.vals, measures) {
-  mid = BBmisc::vcapply(measures, function(x) x$id)
+  measures = assertMeasure(measures)
+  mid = names(measures)
   mc.vals[, lapply(.SD, mean), .SDcols = mid]
 }
 
 getShapleyUncertainty = function(mc.vals, measures) {
-  mid = BBmisc::vcapply(measures, function(x) x$id)
+  measures = assertMeasure(measures)
+  mid = names(measures)
   mc.vals[, lapply(.SD, var), .SDcols = mid]
 }
