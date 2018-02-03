@@ -1,3 +1,12 @@
+assertMeasure = function(measures) {
+  if (inherits(measures, "Measure"))
+    measures = list(measures)
+  assertList(measures, "Measure")
+  mid = BBmisc::vcapply(measures, function(x) x$id)
+  measures = setNames(measures, mid)
+  return(measures)
+}
+
 # @param data the dataset
 # @param features features to be permuted (block-wise)
 # @param keep.fixed which column should be kept fixed?
@@ -15,15 +24,6 @@ permuteFeature = function(data, features, keep.fixed = NULL) {
     data[, features] = data[idx, features]
   }
   return(data)
-}
-
-assertMeasure = function(measures) {
-  if (inherits(measures, "Measure"))
-    measures = list(measures)
-  assertList(measures, "Measure")
-  mid = BBmisc::vcapply(measures, function(x) x$id)
-  measures = setNames(measures, mid)
-  return(measures)
 }
 
 # permuteFeature2 = function(data, feature) {

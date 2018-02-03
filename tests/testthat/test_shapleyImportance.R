@@ -1,5 +1,5 @@
-context("shapleyImportance helper checks")
-test_that("shapleyImportance helper checks", {
+context("shapleyImportance helper checks (glove game)")
+test_that("shapleyImportance helper checks (glove game)", {
   features = c("1", "2", "3")
   perm = generatePermutations(features)
   n = factorial(length(features))
@@ -28,6 +28,7 @@ test_that("shapleyImportance helper checks", {
   vf = rbindlist(value.function)
   vf$features = stri_paste_list(values, ",")
 
+  # see here https://en.wikipedia.org/wiki/Shapley_value#Example
   expect_identical(mean(getMarginalContributionValues(generateMarginalContribution("1", perm), vf)$V1), 1/6)
   expect_identical(mean(getMarginalContributionValues(generateMarginalContribution("2", perm), vf)$V1), 1/6)
   expect_identical(mean(getMarginalContributionValues(generateMarginalContribution("3", perm), vf)$V1), 4/6)

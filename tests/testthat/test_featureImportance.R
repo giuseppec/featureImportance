@@ -6,6 +6,7 @@ test_that("featureImportance with WrappedModel works", {
 
   set.seed(1)
   imp = featureImportance(mod, data = d, features = feat, n.feat.perm = n.feat.perm, measures = measures, local = FALSE)
+  imp = imp$importance
   nrow = length(feat)*n.feat.perm
   expect_data_table(imp, nrows = nrow)
   expect_set_equal(colnames(imp), c("features", "n.feat.perm", mid))
@@ -21,10 +22,12 @@ test_that("featureImportance with WrappedModel works", {
   set.seed(1)
   imp2 = featureImportance(mod$learner.model, data = d, target = target, features = feat, n.feat.perm = n.feat.perm,
     measures = measures.fun, minimize = minimize, local = FALSE, predict.fun = predict.fun)
+  imp2 = imp2$importance
   expect_identical(imp, imp2)
 
   # check if featureImportance local importance works
   imp = featureImportance(mod, data = d, features = feat, n.feat.perm = n.feat.perm, measures = measures, local = TRUE)
+  imp = imp$importance
   nrow = length(feat)*n.feat.perm*nrow(d)
   expect_data_table(imp, nrows = nrow)
   expect_set_equal(colnames(imp), c("features", "n.feat.perm", "obs", mid))
@@ -48,12 +51,14 @@ test_that("featureImportance with ResampleResult works", {
     d = getTaskData(task)
 
     imp = featureImportance(res, data = d, features = feat, n.feat.perm = n.feat.perm, measures = measures, local = FALSE)
+    imp = imp$importance
     nrow = rin$desc$iters*length(feat)*n.feat.perm
 
     expect_data_table(imp, nrows = nrow)
     expect_set_equal(c("cv.iter", "features", "n.feat.perm", mid), colnames(imp))
 
     imp.local = featureImportance(res, data = d, features = feat, n.feat.perm = n.feat.perm, measures = measures, local = TRUE)
+    imp.local = imp.local$importance
     nrow = length(feat)*length(unlist(rin$test.inds))*n.feat.perm
 
     expect_data_table(imp.local, nrows = nrow)

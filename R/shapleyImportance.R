@@ -121,6 +121,7 @@ calculateValueFunctionImportance = function(features, object, data, target = NUL
   mid = names(measures)
   imp = featureImportance(object = object, data = data, features = features,
     measures = measures, n.feat.perm = n.feat.perm)
+  imp = imp$importance
   # aggregate importance
   imp.aggr = imp[, lapply(.SD, mean), .SDcols = mid, by = "features"]
   return(imp.aggr)

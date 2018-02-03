@@ -1,4 +1,5 @@
-featureImportanceLearner = function(learner, task, resampling, measures, weights = NULL,
+featureImportanceLearner = function(learner, task, resampling,
+  measures = mlr::getDefaultMeasure(task), weights = NULL,
   features = as.list(getTaskFeatureNames(task)), n.feat.perm = 50, ...) {
 
   measures = assertMeasure(measures)
@@ -10,15 +11,14 @@ featureImportanceLearner = function(learner, task, resampling, measures, weights
 
   # compute performance on unpermuted data
   data = mlr::getTaskData(task)
-  res = mlr::resample(learner, task, resampling, measures, weights,
-    models = TRUE)
+  res = mlr::resample(learner, task, resampling, measures, weights, models = TRUE)
 
   imp = featureImportance(object = res, data = data, features = features,
     n.feat.perm = n.feat.perm, measures = measures, ...)
 
   makeS3Obj(
     classes = "featureImportance",
-    importance = imp,
+    importance = imp$importance,
     resample = res,
     measures = measures
   )

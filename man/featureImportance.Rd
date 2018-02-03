@@ -4,9 +4,10 @@
 \alias{featureImportance}
 \title{Feature Importance}
 \usage{
-featureImportance(object, data, features, target = NULL, n.feat.perm = 50,
-  local = FALSE, measures, minimize = NULL, predict.fun = NULL,
-  importance.fun = NULL, ...)
+featureImportance(object, data, features = NULL, target = NULL,
+  n.feat.perm = 50, local = FALSE, measures, minimize = NULL,
+  predict.fun = NULL, importance.fun = function(permuted, unpermuted,
+  minimize) ifelse(minimize, -1, 1) * (unpermuted - permuted), ...)
 }
 \arguments{
 \item{object}{[any] \cr
@@ -14,7 +15,7 @@ Either a \code{\link[mlr]{WrappedModel}} or a \code{\link[mlr]{ResampleResult}}.
 You can also provide any other trained model (however, this is experimental and you need to provide an appropriate \code{predict.fun}).}
 
 \item{data}{[\code{data.frame}] \cr
-The data whose features will be shuffled in order to measure the performance drop.
+The data whose features will be permuted in order to measure their importance.
 If \code{object} is of class \code{ResampleResult}, you should use the corresponding data on which the whole resampling was performed. In any other case, you might use some independent test data that was not used to fit the model (although you could also use the train data here).}
 
 \item{features}{[list of \code{character}] \cr
@@ -49,9 +50,11 @@ The signature must be \code{function(object, newdata)} and the function should a
 The default \code{NULL} internally uses \code{predict(object, newdata = newdata)}.}
 
 \item{importance.fun}{[\code{function}] \cr
-Function with two arguments \code{function(permuted, unpermuted)} that defines how the permuted and unpermuted predictions are aggregated to a feature importance measure.
-The function takes the result of \code{\link{measurePerformance}} as input.
-The default \code{NULL} internally uses \code{unpermuted - permuted} which is the drop in performance.}
+Function with signature \code{function(permuted, unpermuted, minimize)} which defines how the permuted and unpermuted predictions are aggregated to a feature importance measure.
+The function takes the result of \code{\link{measurePerformance}} as input for \code{permuted} and \code{unpermuted}.
+The argument \code{minimize} can be used in \code{importance.fun} to change the aggregation behaivour depending on whether the measure is to be minimized or not, e.g. for the drop in performance: \cr
+\code{ifelse(minimize, -1, 1) * (unpermuted - permuted)} \cr
+The default \code{NULL} internally uses \code{permuted - unpermuted} (or \code{unpermuted - permuted}, depending on whether the measure is to be minimized or not) which refers to the drop in performance.}
 
 \item{...}{Not used.}
 }

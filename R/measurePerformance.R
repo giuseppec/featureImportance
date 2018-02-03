@@ -27,13 +27,12 @@ measurePerformance.WrappedModel = function(object, data, target = NULL, measures
     # We should capture this here.
     p2 = splitPrediction(p, seq_row(p$data))
     perf = lapply(seq_along(p2), function(i) {
+      # this is slower: p = predict(object, newdata = data, subset = i)
       mlr::performance(p2[[i]], measures)
     })
     perf = setnames(as.data.table(transpose(perf)), names(perf[[1]]))
-    #as.data.frame(transpose(perf), col.names = names(perf[[1]]), stringsAsFactors = FALSE)
   } else {
     perf = as.data.table(t(mlr::performance(p, measures)))
-    #as.data.frame(t(mlr::performance(p, measures)), stringsAsFactors = FALSE)
   }
   return(perf)
 }
@@ -62,8 +61,6 @@ measurePerformance.default = function(object, data, target = NULL, measures,
       measures.fun(truth = truth, response = p)
     })
   }
-  # perf = setNames(perf, names(measures))
-  # perf = as.data.frame(perf, stringsAsFactors = FALSE)
   perf = as.data.table(perf)
   return(perf)
 }
