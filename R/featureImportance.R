@@ -72,10 +72,21 @@ featureImportance.ResampleResult = function(object, data, features = NULL, targe
   n.feat.perm = 50, local = FALSE, measures = mlr::getDefaultMeasure(object$task.desc), minimize = NULL,
   predict.fun = NULL, importance.fun = NULL, ...) {
 
-  assertSubset(target, choices = object$task.desc$target, empty.ok = TRUE)
-  measures = assertMeasure(measures)
+  td = getTaskDesc(object)
+  ts = getTaskSize(td)
+  tn = getTaskTargetNames(td)
+
+  assertSubset(target, choices = tn, empty.ok = TRUE)
   if (is.null(target))
-    target = object$task.desc$target
+    target = tn
+
+  if (ts != nrow(data) | any(tn %nin% colnames(data))) {
+    warningf("Use the same data that created the ResampleResult.")
+    assertDataFrame(data, nrows = ts)
+    assertSubset(features, colnames(data))
+  }
+
+  measures = assertMeasure(measures)
 
   if (is.null(object$models))
     stop("Use 'models = TRUE' to create the ResampleResult.")
@@ -113,7 +124,7 @@ featureImportance.default = function(object, data, features = NULL, target = NUL
   n.feat.perm = 50, local = FALSE, measures, minimize = NULL,
   predict.fun = NULL, importance.fun = NULL, ...) {
 
-  assertCharacter(target, null.ok = TRUE)
+  assertSubset(target, colnames(data), empty.ok = FALSE)
   assertList(measures, "function", names = "strict")
   assertLogical(minimize, names = "strict", len = length(measures))
   assertSetEqual(names(measures), names(minimize))
@@ -147,7 +158,7 @@ computeFeatureImportance = function(object, data, features, target = NULL,
     measures = measures, local = local, predict.fun = predict.fun)
 
   # FIXME: allow Parallelization
-  imp = lapply(seq_len(n.feat.perm), function(i) {
+  imp = pbapply::pblapply(seq_len(n.feat.perm), function(i) {
     feat.imp = lapply(features, function(feature) {
       # measure performance when feature is shuffled
       permuted.perf = measurePerformance(object, data = permuteFeature(data, features = feature),

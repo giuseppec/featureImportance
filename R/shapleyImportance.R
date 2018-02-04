@@ -11,14 +11,16 @@
 #' @template arg_n.feat.perm
 #' @param n.shapley.perm [\code{numeric(1)} | \code{"all.unique"}] \cr
 #' The number of permutations that should be used for the shapley value.
+#' Use \code{"all.unique"} to use all unique permutations.
 #' If n.shapley.perm > number of all unique permutatios then only all unique permutations are used.
-#' Default is \code{"all.unique"}.
+#' Default is 120.
 #' @template arg_measures
 #' @param value.function [\code{function}] \cr
 #' Function that defines the value function which is used to compute the shapley value.
 #' @export
 shapleyImportance = function(object, data, features, target, n.feat.perm = 50,
-  n.shapley.perm = "all.unique", measures, value.function = calculateValueFunctionImportance) {
+  n.shapley.perm = 120, measures, value.function = calculateValueFunctionImportance) {
+  assertSubset(features, colnames(data))
   assertSubset(target, colnames(data))
   measures = assertMeasure(measures)
   all.feats = setdiff(colnames(data), target)
@@ -32,7 +34,10 @@ shapleyImportance = function(object, data, features, target, n.feat.perm = 50,
   values = unique(unname(unlist(mc, recursive = FALSE)))
 
   # compute value function for all unique value functions
-  vf = lapply(values, function(f) {
+  # FIXME: allow parallelization
+  vf = pbapply::pblapply(values, function(f) {
+    opb = pboptions(type = "none")
+    on.exit(pboptions(opb))
     value.function(object = object, data = data, measures = measures,
       target = target, n.feat.perm = n.feat.perm, features = f)
   })
@@ -121,9 +126,8 @@ calculateValueFunctionImportance = function(features, object, data, target = NUL
   mid = names(measures)
   imp = featureImportance(object = object, data = data, features = features,
     measures = measures, n.feat.perm = n.feat.perm)
-  imp = imp$importance
   # aggregate importance
-  imp.aggr = imp[, lapply(.SD, mean), .SDcols = mid, by = "features"]
+  imp.aggr = imp$importance[, lapply(.SD, mean), .SDcols = mid, by = "features"]
   return(imp.aggr)
 }
 
@@ -134,13 +138,13 @@ calculateValueFunctionPerformance = function(features, object, data, target, mea
   measures = assertMeasure(measures)
 
   mid = names(measures)
+  minimize = BBmisc::vlapply(measures, function(x) x$minimize)
   all.feats = setdiff(colnames(data), target)
   # shuffle all features except the ones for which we want to compute the value function
   shuffle.features = setdiff(all.feats, features)
   # compute the value function
   ret = measurePerformance(object, data = permuteFeature(data, features = shuffle.features),
     target = target, measures = measures, predict.fun = predict.fun)
-  minimize = BBmisc::vlapply(measures, function(x) x$minimize)
   if (nrow(ret) != 1)
     stopf("'ret' should be only one row.")
   ret = ifelse(minimize, -1, 1)*ret

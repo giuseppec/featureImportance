@@ -12,7 +12,8 @@ Imports:
     backports (>= 1.1.0),
     BBmisc (>= 1.11),
     checkmate (>= 1.8.2),
-    stringi
+    stringi,
+    pbapply
 Suggests: 
     testthat,
     e1071,
