@@ -62,6 +62,7 @@ shapleyImportance = function(object, data, features, target, n.feat.perm = 50,
   makeS3Obj("ShapleyImportance",
     permutations = perm,
     measures = measures,
+    value.function = vf,
     shapley.value = rbindlist(setNames(shapley.value, features), idcol = "feature"),
     shapley.uncertainty = rbindlist(setNames(shapley.uncertainty, features), idcol = "feature"),
     marginal.contributions = rbindlist(setNames(mc.vf, features), idcol = "feature"))
@@ -108,8 +109,9 @@ generateMarginalContribution = function(f, perm) {
       without.f = NA_character_
       with.f = f
     } else {
-      without.f = new.feature.order[1:(f.ind - 1)]
-      with.f = c(without.f, f)
+      # sorting speeds up everything as we can use the same value function, e.g. for X1,X2 and X2,X1
+      without.f = sort(new.feature.order[1:(f.ind - 1)])
+      with.f = sort(c(without.f, f)) #with.f = c(without.f, f)
     }
     return(list(with.f = with.f, without.f = without.f))
   })
@@ -143,17 +145,20 @@ calculateValueFunctionPerformance = function(features, object, data, target, mea
   # shuffle all features except the ones for which we want to compute the value function
   shuffle.features = setdiff(all.feats, features)
   # compute the value function
-  ret = measurePerformance(object, data = permuteFeature(data, features = shuffle.features),
-    target = target, measures = measures, predict.fun = predict.fun)
-  if (nrow(ret) != 1)
-    stopf("'ret' should be only one row.")
-  ret = ifelse(minimize, -1, 1)*ret
+  ret = lapply(1:n.feat.perm, function(i) {
+    ret = measurePerformance(object, data = permuteFeature(data, features = shuffle.features),
+      target = target, measures = measures, predict.fun = predict.fun)
+    if (nrow(ret) != 1)
+      stopf("'ret' should be only one row.")
+    ret = ifelse(minimize, -1, 1)*ret
+  })
+  ret = rbindlist(ret)
   # we can remove empty.set which is always substracted as we use differences of value functions
   #empty.set = measurePerformance(object, data = permuteFeature(data, features = all.feats),
   #  target = target, measures = measures, predict.fun = predict.fun)
   # FIXME: ret - empty.set when measure should be maximized
   #return(empty.set - ret)
-  return(ret)
+  return(ret[, lapply(.SD, mean)])
 }
 
 getMarginalContributionValues = function(mc, vf) {

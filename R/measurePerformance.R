@@ -19,6 +19,26 @@ measurePerformance = function(object, data, target = NULL, measures,
 }
 
 #' @export
+measurePerformance.ResampleResult = function(object, data, target = NULL, measures,
+  local = FALSE, predict.fun = NULL) {
+  mid = BBmisc::vcapply(measures, function(x) x$id)
+
+  # FIXME: local not working here
+  assertFALSE(local)
+
+  perf = lapply(seq_along(object$models), function(i) {
+    mod = object$models[[i]]
+    train.ind = mod$subset
+    test.ind = setdiff(seq_row(data), train.ind)
+    measurePerformance(mod, data = data[test.ind, ], target = target, measures = measures,
+      local = local, predict.fun = predict.fun)
+  })
+
+  perf = rbindlist(perf, idcol = "cv.iter")
+  perf[, lapply(.SD, mean), .SDcols = mid]
+}
+
+#' @export
 measurePerformance.WrappedModel = function(object, data, target = NULL, measures,
   local = FALSE, predict.fun = NULL) {
   p = predict(object, newdata = data)
@@ -76,29 +96,3 @@ splitPrediction = function(p, f) {
     p2
   })
 }
-
-# this is faster for small DS
-# measurePerformance2 = function(mod, data, feature, measures, shuffle = FALSE, local = FALSE, n.feat.perm = 1) {
-#   if (shuffle) {
-#     data = replicate(n.feat.perm, {
-#       permuteFeature(data, feature)
-#     }, simplify = FALSE)
-#     data = as.data.frame(rbindlist(data, idcol = "n.feat.perm"), stringsAsFactors = FALSE)
-#   }
-#   p = predict(mod, newdata = data)
-#   #pred.data = split(p$data, data$n.feat.perm)
-#   p2 = splitPrediction(p, data$n.feat.perm)
-#
-#   if (local) {
-#      p2 = splitPrediction(p, seq_row(p$data))
-#      perf = lapply(seq_along(p2), function(i) {
-#        c("obs" = i, mlr::performance(p2[[i]], measures))
-#      })
-#   } else {
-#     perf = lapply(p2, function(x) {
-#       as.data.frame(t(mlr::performance(x, measures)), stringsAsFactors = FALSE)
-#     })
-#   }
-#   return(perf)
-# }
-#

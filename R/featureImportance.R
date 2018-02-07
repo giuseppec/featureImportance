@@ -106,7 +106,7 @@ featureImportance.ResampleResult = function(object, data, features = NULL, targe
     }
     computeFeatureImportance(object = mod, data = data[test.ind, ], features = features,
       measures = measures, minimize = minimize, n.feat.perm = n.feat.perm,
-      local = local, obs.id = obs.id)
+      importance.fun = importance.fun, local = local, obs.id = obs.id)
   })
 
   imp = rbindlist(ret, idcol = "cv.iter")
@@ -158,7 +158,7 @@ computeFeatureImportance = function(object, data, features, target = NULL,
     measures = measures, local = local, predict.fun = predict.fun)
 
   # FIXME: allow Parallelization
-  imp = pbapply::pblapply(seq_len(n.feat.perm), function(i) {
+  imp = lapply(seq_len(n.feat.perm), function(i) {
     feat.imp = lapply(features, function(feature) {
       # measure performance when feature is shuffled
       permuted.perf = measurePerformance(object, data = permuteFeature(data, features = feature),
