@@ -1,8 +1,6 @@
 context("featureImportance with WrappedModel works")
 test_that("featureImportance with WrappedModel works", {
-  n.feat.perm = 2
   feat = as.list(features)
-  # minimize = !BBmisc::vlapply(measures, function(x) x$minimize)
 
   set.seed(1)
   imp = featureImportance(mod, data = d, features = feat, n.feat.perm = n.feat.perm, measures = measures, local = FALSE)
@@ -14,12 +12,8 @@ test_that("featureImportance with WrappedModel works", {
   expect_equal(stri_split_fixed(unique(imp$features), ","), feat)
 
   # check if using mod$learner.model yields the same importances
-  measures.fun = list(acc = measureACC, mmce = measureMMCE)
-  mid = names(measures.fun)
-  minimize = c(acc = FALSE, mmce = TRUE)
-  predict.fun = function(object, newdata) predict(object, newdata, type = "class")
-
   set.seed(1)
+  predict.fun = function(object, newdata) predict(object, newdata, type = "class")
   imp2 = featureImportance(mod$learner.model, data = d, target = target, features = feat, n.feat.perm = n.feat.perm,
     measures = measures.fun, minimize = minimize, local = FALSE, predict.fun = predict.fun)
   imp2 = imp2$importance
@@ -37,19 +31,11 @@ test_that("featureImportance with WrappedModel works", {
 
 context("featureImportance with ResampleResult works")
 test_that("featureImportance with ResampleResult works", {
-  n.feat.perm = 2
   feat = list(features[1:2], features[3:4])
 
-  resampling = list(
-    makeResampleInstance(makeResampleDesc("CV", iters = 2), task),
-    makeResampleInstance(makeResampleDesc("Bootstrap", iters = 2), task),
-    makeResampleInstance(makeResampleDesc("RepCV", folds = 2, reps = 2), task)
-  )
-
-  for (rin in resampling) {
-    res = mlr::resample(learner, task, rin, measures, models = TRUE, keep.pred = TRUE)
-    d = getTaskData(task)
-
+  for (i in seq_along(res.list)) {
+    res = res.list[[i]]
+    rin = resampling[[i]]
     imp = featureImportance(res, data = d, features = feat, n.feat.perm = n.feat.perm, measures = measures, local = FALSE)
     imp = imp$importance
     nrow = rin$desc$iters*length(feat)*n.feat.perm
