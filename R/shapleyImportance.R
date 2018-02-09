@@ -80,6 +80,7 @@ print.ShapleyImportance = function(x, ...) {
 }
 
 ### helper functions
+###
 # @param f [\code{character(1)}] \cr
 # single feature for wich marginal contributions are computed using permutations in 'perm'
 # @param perm list of permutations that are used to compute marginal contributions for
@@ -91,7 +92,7 @@ generatePermutations = function(features, n.shapley.perm = "all.unique") {
   n.feat = length(features)
 
   if (n.shapley.perm == "all.unique" | (n.shapley.perm >= factorial(n.feat))) {
-    messagef("All %s unique permuatations for the %s features were generated!", factorial(n.feat), n.feat)
+    messagef("All %s unique permutations for the %s features were generated!", factorial(n.feat), n.feat)
     p = e1071::permutations(n.feat)
     p = lapply(seq_row(p), function(i) features[p[i,]])
   } else {
