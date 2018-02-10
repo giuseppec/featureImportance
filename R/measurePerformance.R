@@ -26,6 +26,9 @@ measurePerformance.ResampleResult = function(object, data, target = NULL, measur
   # FIXME: local not working here
   assertFALSE(local)
 
+  if (is.null(object$models))
+    stop("Use 'models = TRUE' to create the ResampleResult.")
+
   perf = lapply(seq_along(object$models), function(i) {
     mod = object$models[[i]]
     train.ind = mod$subset
