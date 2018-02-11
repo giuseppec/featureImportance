@@ -29,7 +29,10 @@ test_that("shapleyImportance helper checks (glove game)", {
   vf$features = stri_paste_list(values, ",")
 
   # see here https://en.wikipedia.org/wiki/Shapley_value#Example
-  expect_identical(mean(getMarginalContributionValues(generateMarginalContribution("1", perm), vf)$V1), 1/6)
-  expect_identical(mean(getMarginalContributionValues(generateMarginalContribution("2", perm), vf)$V1), 1/6)
-  expect_identical(mean(getMarginalContributionValues(generateMarginalContribution("3", perm), vf)$V1), 4/6)
+  mc1 = generateMarginalContribution("1", perm)
+  mc2 = generateMarginalContribution("2", perm)
+  mc3 = generateMarginalContribution("3", perm)
+  expect_identical(mean(getMarginalContributionValues(mc1, vf)$V1), 1/6)
+  expect_identical(mean(getMarginalContributionValues(mc2, vf)$V1), 1/6)
+  expect_identical(mean(getMarginalContributionValues(mc3, vf)$V1), 4/6)
 })

@@ -4,6 +4,7 @@
 #' @import mlr
 #' @import parallelMap
 #' @import stringi
+#' @import pbapply
 #' @importFrom stats predict setNames var
 
 .onAttach = function(libname, pkgname) {

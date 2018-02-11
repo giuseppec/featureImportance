@@ -162,20 +162,55 @@ calculateValueFunctionPerformance = function(features, object, data, target, mea
   return(ret[, lapply(.SD, mean)])
 }
 
+# getMarginalContributionValues = function(mc, vf) {
+#   f = vf$features
+#   vf = vf[, -"features"]
+#   mc.vals = lapply(mc, function(m) {
+#     # make list out of character of features of the form c("x.1,x.2", "x.2,x.3")
+#     with.f = stri_paste(m$with.f, collapse = ",")
+#     without.f = stri_paste(m$without.f, collapse = ",")
+#     # value function with feature f
+#     v.with.f = vf[charmatch(with.f, f), ] #vf[f %in% with.f,]
+#     # value function without feature f
+#     v.without.f = vf[charmatch(without.f, f), ] #vf[f %in% without.f,]
+#     # marginal contribution value is the difference:
+#     ret = v.with.f - v.without.f
+#     dt.feat = data.table(features.with.f = with.f, features.without.f = without.f, ret)
+#     #cbind(dt.feat, ret)
+#   })
+#   rbindlist(mc.vals)
+# }
+
 getMarginalContributionValues = function(mc, vf) {
+  f = vf$features
+  vf = vf[, -"features"]
   mc.vals = lapply(mc, function(m) {
-    # make list out of character of features of the form c("x.1,x.2", "x.2,x.3")
-    f = stri_split_fixed(vf$features, ",")
+    # make string to match with f
+    with.f = stri_paste(m$with.f, collapse = ",")
+    without.f = stri_paste(m$without.f, collapse = ",")
     # value function with feature f
-    v.with.f = vf[f %in% list(m$with.f), -"features"]
+    v.with.f = vf[charmatch(with.f, f), ] #vf[f %in% with.f,]
     # value function without feature f
-    v.without.f = vf[f %in% list(m$without.f), -"features"]
-    # marginal contribution value is the difference:
-    ret = v.with.f - v.without.f
-    dt.feat = data.table(features.with.f = list(m$with.f), features.without.f = list(m$without.f))
-    cbind(dt.feat, ret)
+    v.without.f = vf[charmatch(without.f, f), ] #vf[f %in% without.f,]
+    list(
+      with.f = with.f,
+      without.f = without.f,
+      v.with.f = v.with.f,
+      v.without.f = v.without.f
+    )
   })
-  rbindlist(mc.vals)
+
+  # extract string
+  with.f = vcapply(mc.vals, function(x) x$with.f)
+  without.f = vcapply(mc.vals, function(x) x$without.f)
+
+  # extract value functions
+  v.with.f = rbindlist(lapply(mc.vals, function(x) x$v.with.f))
+  v.without.f = rbindlist(lapply(mc.vals, function(x) x$v.without.f))
+
+  # compute marginal contribution value which is the difference of value functions:
+  ret = v.with.f - v.without.f
+  return(data.table(features.with.f = with.f, features.without.f = without.f, ret))
 }
 
 getShapleyImportance = function(mc.vals, measures) {
