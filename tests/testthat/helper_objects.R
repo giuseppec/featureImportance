@@ -4,10 +4,11 @@ configureMlr(show.info = FALSE, show.learner.output = FALSE)
 
 # learner and task
 learner = makeLearner("classif.rpart", predict.type = "prob")
+predict.fun = function(object, newdata) predict(object, newdata, type = "class")
 task = pid.task #subsetTask(pid.task, subset = 1:100)
 
 # Extract task infos
-features = getTaskFeatureNames(task)
+features = getTaskFeatureNames(task)[1:4]
 target = getTaskTargetNames(task)
 d = getTaskData(task)
 

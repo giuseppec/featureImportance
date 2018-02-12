@@ -13,21 +13,22 @@ test_that("featureImportanceLearner works", {
 
   for (rin in resampling) {
     imp = featureImportanceLearner(learner, task, rin, features = feat, n.feat.perm = n.feat.perm, measures = measures, local = FALSE)
-    nrow = rin$desc$iters*length(feat)*n.feat.perm
+    nrow = #rin$desc$iters*
+      length(feat)*n.feat.perm
 
     expect_data_table(imp$importance, nrows = nrow)
-    expect_set_equal(c("cv.iter", "features", "n.feat.perm", mid), colnames(imp$importance))
+    expect_set_equal(c("features", "n.feat.perm", mid), colnames(imp$importance))
 
     imp.local = featureImportanceLearner(learner, task, rin, features = feat, n.feat.perm = n.feat.perm, measures = measures, local = TRUE)
     res = imp.local$resample
     imp.local = imp.local$importance
 
-    nrow = length(feat)*length(unlist(rin$test.inds))*n.feat.perm
+    nrow = length(feat)*length(unique(unlist(rin$test.inds)))*n.feat.perm
 
     expect_data_table(imp.local, nrows = nrow)
     expect_equal(imp.local$acc, imp.local$mmce)
     expect_equal(stri_split_fixed(unique(imp.local$features), ","), feat)
-    expect_set_equal(colnames(imp.local), c("cv.iter", "features", "n.feat.perm", "obs", mid))
-    expect_set_equal(res$pred$data$id, imp.local$obs)
+    expect_set_equal(colnames(imp.local), c("features", "n.feat.perm", "row.id", mid))
+    expect_set_equal(res$pred$data$id, imp.local$row.id)
   }
 })

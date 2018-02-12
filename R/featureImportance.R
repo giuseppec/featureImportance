@@ -93,23 +93,9 @@ featureImportance.ResampleResult = function(object, data, features = NULL, targe
 
   minimize = BBmisc::vlapply(measures, function(x) x$minimize)
   # for each fold and each feature: permute the feature and measure performance on permuted feature
-  ret = lapply(seq_along(object$models), function(i) {
-    mod = object$models[[i]]
-    if (is.null(features))
-      features = as.list(mod$features)
-    train.ind = mod$subset
-    test.ind = setdiff(seq_row(data), train.ind)
-    if (local) {
-      obs.id = test.ind
-    } else {
-      obs.id = NULL
-    }
-    computeFeatureImportance(object = mod, data = data[test.ind, ], features = features,
-      measures = measures, minimize = minimize, n.feat.perm = n.feat.perm,
-      importance.fun = importance.fun, local = local, obs.id = obs.id)
-  })
-
-  imp = rbindlist(ret, idcol = "cv.iter")
+  imp = computeFeatureImportance(object = object, data = data, features = features,
+    measures = measures, minimize = minimize, n.feat.perm = n.feat.perm,
+    importance.fun = importance.fun, local = local)
 
   makeS3Obj(
     classes = "featureImportance",
@@ -148,10 +134,7 @@ featureImportance.default = function(object, data, features = NULL, target = NUL
 
 computeFeatureImportance = function(object, data, features, target = NULL,
   n.feat.perm = 50, local = FALSE, measures, minimize = NULL,
-  predict.fun = NULL, importance.fun = NULL, obs.id = NULL) {
-
-  if (local & is.null(obs.id))
-    obs.id = BBmisc::seq_row(data)
+  predict.fun = NULL, importance.fun = NULL) {
 
   # measure performance
   unpermuted.perf = measurePerformance(object, data = data, target = target,
@@ -165,7 +148,7 @@ computeFeatureImportance = function(object, data, features, target = NULL,
         target = target, measures = measures, local = local, predict.fun = predict.fun)
       # Compare true and shuffled performance
       measureFeatureImportance(permuted.perf, unpermuted.perf, minimize = minimize,
-        importance.fun = importance.fun, obs.id = obs.id)
+        importance.fun = importance.fun)
     })
     feat.imp = rbindlist(feat.imp, idcol = "features")
     # replace the feature id with its corresponding feature set

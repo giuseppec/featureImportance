@@ -5,7 +5,7 @@
 \title{Measure Performance}
 \usage{
 measurePerformance(object, data, target = NULL, measures, local = FALSE,
-  predict.fun = NULL)
+  predict.fun = NULL, row.id = seq_row(data))
 }
 \arguments{
 \item{object}{[any] \cr

@@ -1,13 +1,17 @@
 #' @title Shapley Importance
 #'
 #' @description Computes the shapley importance of a feature.
-#'
+#' @references Cohen, S., Dror, G., & Ruppin, E. (2007).
+#' Feature selection via coalitional game theory.
+#' Neural Computation, 19(7), 1939-1961.
 #' @template arg_object
 #' @template arg_data
 #' @param features [\code{character}] \cr
 #' the feature(s) for which the shapley importance should be computed.
 #' @param target [\code{character(1)}] \cr
 #' The target feature.
+#' @param bound.size [\code{numeric(1)}] \cr
+#' Bound on the permutation size to compute the Shapley value (see Cohen (2007)).
 #' @template arg_n.feat.perm
 #' @param n.shapley.perm [\code{numeric(1)} | \code{"all.unique"}] \cr
 #' The number of permutations that should be used for the shapley value.
@@ -18,13 +22,15 @@
 #' @param value.function [\code{function}] \cr
 #' Function that defines the value function which is used to compute the shapley value.
 #' @export
-shapleyImportance = function(object, data, features, target, n.feat.perm = 50,
-  n.shapley.perm = 120, measures, value.function = calculateValueFunctionImportance) {
+shapleyImportance = function(object, data, features, target, bound.size = NULL,
+  n.feat.perm = 50, n.shapley.perm = 120, measures,
+  value.function = calculateValueFunctionImportance) {
   assertSubset(features, colnames(data))
   assertSubset(target, colnames(data))
   measures = assertMeasure(measures)
   all.feats = setdiff(colnames(data), target)
-  perm = generatePermutations(all.feats, n.shapley.perm = n.shapley.perm)
+  perm = generatePermutations(all.feats, n.shapley.perm = n.shapley.perm,
+    bound.size = bound.size)
 
   # generate all marginal contribution sets for features where we want to compute the shapley importance
   mc.list = lapply(features, function(x) generateMarginalContribution(x, perm))
@@ -86,22 +92,31 @@ print.ShapleyImportance = function(x, ...) {
 # @param perm list of permutations that are used to compute marginal contributions for
 
 # generate n.shapley.perm permutations for alle elements in features
-generatePermutations = function(features, n.shapley.perm = "all.unique") {
+generatePermutations = function(features, n.shapley.perm = "all.unique", bound.size = NULL) {
   assertCharacter(features)
   assert(checkSubset(n.shapley.perm, "all.unique"), checkIntegerish(n.shapley.perm, lower = 1))
   n.feat = length(features)
+  if (is.null(bound.size))
+    bound.size = n.feat
+  #if (is.null(bound.size))
+  #  bound.size = ceiling(sqrt(length(features)))
 
   if (n.shapley.perm == "all.unique" | (n.shapley.perm >= factorial(n.feat))) {
     messagef("All %s unique permutations for the %s features were generated!", factorial(n.feat), n.feat)
     p = e1071::permutations(n.feat)
     p = lapply(seq_row(p), function(i) features[p[i,]])
   } else {
-    p = lapply(1:n.shapley.perm, function(x) sample(features))
+    p = lapply(1:n.shapley.perm, function(x) sample(features, size = bound.size))
   }
   return(p)
 }
 
 generateMarginalContribution = function(f, perm) {
+  missing = vlapply(perm, function(x) {
+    f %nin% x
+  })
+  perm = perm[!missing]
+
   lapply(perm, function(new.feature.order) {
     # index of feature f in permuted feature vector
     f.ind = which(new.feature.order == f)

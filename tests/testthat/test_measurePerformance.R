@@ -6,32 +6,25 @@ test_that("measurePerformance works", {
   expect_set_equal(colnames(perf), mid)
 
   perf.local = measurePerformance(mod, data = d, measures = measures, local = TRUE)
-  expect_data_frame(perf.local, nrows = nrow(d), ncols = length(measures))
-  expect_set_equal(colnames(perf.local), mid)
+  expect_data_frame(perf.local, nrows = nrow(d), ncols = length(measures) + 1)
+  expect_set_equal(colnames(perf.local), c("row.id", mid))
+
+  perf.local = measurePerformance(mod, data = d, measures = measures,
+    local = TRUE, row.id = seq_row(d) + 10)
+  expect_equal(perf.local$row.id, seq_row(d) + 10)
+  expect_data_frame(perf.local, nrows = nrow(d), ncols = length(measures) + 1)
+  expect_set_equal(colnames(perf.local), c("row.id", mid))
 
   # check if measure performance works with non-WrappedModel
-  perf = measurePerformance(mod$learner.model, data = d, target = target, measures = measure.fun, local = FALSE,
+  perf = measurePerformance(mod$learner.model, data = d, target = target,
+    measures = measures.fun, local = FALSE,
     predict.fun = function(object, newdata) predict(object, newdata, type = "class"))
-  expect_data_frame(perf, nrows = 1, ncols = length(measure.fun))
-  expect_set_equal(colnames(perf), names(measure.fun))
+  expect_data_frame(perf, nrows = 1, ncols = length(measures.fun))
+  expect_set_equal(colnames(perf), names(measures.fun))
 
-  perf.local = measurePerformance(mod$learner.model, data = d, target = target, measures = measure.fun, local = TRUE,
+  perf.local = measurePerformance(mod$learner.model, data = d, target = target,
+    measures = measures.fun, local = TRUE,
     predict.fun = function(object, newdata) predict(object, newdata, type = "class"))
-  expect_data_frame(perf.local, nrows = nrow(d), ncols = length(measure.fun))
-  expect_set_equal(colnames(perf), names(measure.fun))
-
-  # context("measurePerformanceDrop works")
-  # # measurePerformanceDrop
-  # perf2 = measurePerformance(mod, data = d, features, measures, shuffle = TRUE, local = FALSE)
-  # perf.local2 = measurePerformance(mod, data = d, features, measures, shuffle = TRUE, local = TRUE)
-  #
-  # zero.drop = measurePerformanceDrop(perf.shuffled = perf, perf.true = perf, minimize = minimize)
-  # expect_data_frame(zero.drop, nrows = 1, ncols = length(measures))
-  # expect_true(all(zero.drop == 0))
-  #
-  # zero.drop.local = measurePerformanceDrop(perf.shuffled = perf.local, perf.true = perf.local, minimize = minimize)
-  # expect_data_frame(zero.drop.local, nrows = nrow(d), ncols = length(measures) + 1)
-  # expect_set_equal(colnames(zero.drop.local), c(mid, "obs"))
-  # expect_true(identical(zero.drop.local$obs, seq_row(d)))
-  # expect_true(all(zero.drop.local[, mid] == 0))
+  expect_data_frame(perf.local, nrows = nrow(d), ncols = length(measures.fun) + 1)
+  expect_set_equal(colnames(perf.local), c("row.id", names(measures.fun)))
 })

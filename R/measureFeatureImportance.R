@@ -3,28 +3,21 @@
 # @param unpermuted.perf a vector of the true performance(s)
 # @param measures the performance measures that have been used: if big values for the measure are better, the drop in performance is true - permuted (negative "drop" values are performance "gains")
 measureFeatureImportance = function(permuted.perf, unpermuted.perf, minimize,
-  importance.fun = NULL, obs.id = NULL) {
-  assertLogical(minimize, len = ncol(permuted.perf))
+  importance.fun = NULL) {
+  #assertLogical(minimize, len = ncol(permuted.perf))
+  mid = setdiff(colnames(permuted.perf), c("row.id", "cv.iter"))
 
   if (is.null(importance.fun)) {
     importance.fun = function(permuted, unpermuted, minimize)
       ifelse(minimize, -1, 1) * (unpermuted - permuted)
   }
 
-  if (!is.null(obs.id) & (nrow(permuted.perf) != length(obs.id)))
-    stop("'obs.id' has different length")
-
-  fi = lapply(seq_along(minimize), function(i)
+  fi = lapply(mid, function(i)
     importance.fun(permuted.perf[[i]], unpermuted.perf[[i]], minimize[i]))
 
-  if (!is.null(obs.id)) {
-    fi = c(list(obs.id), fi)
-    cols = c("obs", colnames(unpermuted.perf))
-  } else {
-    cols = colnames(unpermuted.perf)
-  }
+  fi = setnames(as.data.table(fi), mid)
 
-  fi = setnames(as.data.table(fi), cols)
-
+  if ("row.id" %in% colnames(permuted.perf))
+    fi = cbind("row.id" = permuted.perf$row.id, fi)
   return(fi)
 }

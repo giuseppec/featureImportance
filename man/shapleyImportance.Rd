@@ -4,8 +4,8 @@
 \alias{shapleyImportance}
 \title{Shapley Importance}
 \usage{
-shapleyImportance(object, data, features, target, n.feat.perm = 50,
-  n.shapley.perm = "all.unique", measures,
+shapleyImportance(object, data, features, target, bound.size = NULL,
+  n.feat.perm = 50, n.shapley.perm = 120, measures,
   value.function = calculateValueFunctionImportance)
 }
 \arguments{
@@ -23,14 +23,18 @@ the feature(s) for which the shapley importance should be computed.}
 \item{target}{[\code{character(1)}] \cr
 The target feature.}
 
+\item{bound.size}{[\code{numeric(1)}] \cr
+Bound on the permutation size to compute the Shapley value (see Cohen (2007)).}
+
 \item{n.feat.perm}{[\code{numeric(1)}] \cr
 The number of permutations of the feature(s) used to compute the feature importance.
 The default is 50.}
 
 \item{n.shapley.perm}{[\code{numeric(1)} | \code{"all.unique"}] \cr
 The number of permutations that should be used for the shapley value.
+Use \code{"all.unique"} to use all unique permutations.
 If n.shapley.perm > number of all unique permutatios then only all unique permutations are used.
-Default is \code{"all.unique"}.}
+Default is 120.}
 
 \item{measures}{[\code{\link[mlr]{Measure}} | list of \code{\link[mlr]{Measure}} | \code{function} | list of \code{function}] \cr
 Performance measure(s) used to measure the model performance.
@@ -42,4 +46,9 @@ Function that defines the value function which is used to compute the shapley va
 }
 \description{
 Computes the shapley importance of a feature.
+}
+\references{
+Cohen, S., Dror, G., & Ruppin, E. (2007).
+Feature selection via coalitional game theory.
+Neural Computation, 19(7), 1939-1961.
 }

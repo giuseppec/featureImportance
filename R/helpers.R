@@ -7,6 +7,27 @@ assertMeasure = function(measures) {
   return(measures)
 }
 
+assertResampleResultData = function(object, data, target) {
+  td = getTaskDesc(object)
+  ts = getTaskSize(td)
+  tn = getTaskTargetNames(td)
+
+  # check ResampleResult
+  if (is.null(object$models))
+    stop("Use 'models = TRUE' to create the ResampleResult.")
+  features = object$models[[1]]$features
+
+  # check if target equals target from td
+  assertSubset(target, choices = tn, empty.ok = TRUE)
+
+  # some checks for the data ()
+  if (ts != nrow(data) | any(tn %nin% colnames(data))) {
+    warningf("Use the same data that created the ResampleResult.")
+    assertDataFrame(data, nrows = ts)
+    assertSubset(features, colnames(data))
+  }
+}
+
 # @param data the dataset
 # @param features features to be permuted (block-wise)
 # @param keep.fixed which column should be kept fixed?

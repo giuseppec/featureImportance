@@ -12,39 +12,53 @@
 #' @template arg_measures
 #' @template arg_local
 #' @template arg_predict.fun
+#' @param row.id [\code{numeric}] \cr
+#' Row IDs
 #' @export
-measurePerformance = function(object, data, target = NULL, measures,
-  local = FALSE, predict.fun = NULL) {
+measurePerformance = function(object, data, target = NULL,
+  measures, local = FALSE, predict.fun = NULL, row.id = seq_row(data)) {
+  assertDataFrame(data)
+  assertCharacter(target, null.ok = TRUE)
+  assertLogical(local)
+  assertIntegerish(row.id, len = nrow(data))
   UseMethod("measurePerformance")
 }
 
 #' @export
-measurePerformance.ResampleResult = function(object, data, target = NULL, measures,
-  local = FALSE, predict.fun = NULL) {
-  mid = BBmisc::vcapply(measures, function(x) x$id)
-
-  # FIXME: local not working here
-  assertFALSE(local)
-
-  if (is.null(object$models))
-    stop("Use 'models = TRUE' to create the ResampleResult.")
+measurePerformance.ResampleResult = function(object, data, target = NULL,
+  measures, local = FALSE, predict.fun = NULL, row.id = seq_row(data)) {
+  assertResampleResultData(object, data, target)
+  measures = assertMeasure(measures)
+  mid = names(measures)
+  if (is.null(target))
+    target = getTaskTargetNames(getTaskDesc(object))
 
   perf = lapply(seq_along(object$models), function(i) {
     mod = object$models[[i]]
     train.ind = mod$subset
     test.ind = setdiff(seq_row(data), train.ind)
-    measurePerformance(mod, data = data[test.ind, ], target = target, measures = measures,
-      local = local, predict.fun = predict.fun)
+    measurePerformance(mod, data = data[test.ind, ], target = target,
+      measures = measures, local = local, predict.fun = predict.fun,
+      row.id = test.ind)
   })
 
   perf = rbindlist(perf, idcol = "cv.iter")
-  perf[, lapply(.SD, mean), .SDcols = mid]
+
+  # aggregate results across cv.iter
+  if (local)
+    perf = sortByCol(perf[, lapply(.SD, mean), .SDcols = mid, by = "row.id"], "row.id") else
+      perf = perf[, lapply(.SD, mean), .SDcols = mid]
+
+  return(perf)
 }
 
 #' @export
-measurePerformance.WrappedModel = function(object, data, target = NULL, measures,
-  local = FALSE, predict.fun = NULL) {
+measurePerformance.WrappedModel = function(object, data, target = NULL,
+  measures, local = FALSE, predict.fun = NULL, row.id = seq_row(data)) {
+  measures = assertMeasure(measures)
+
   p = predict(object, newdata = data)
+
   if (local) {
     # FIXME: not all measures can handle "local" importance, e.g. auc does not work.
     # We should capture this here.
@@ -54,6 +68,7 @@ measurePerformance.WrappedModel = function(object, data, target = NULL, measures
       mlr::performance(p2[[i]], measures)
     })
     perf = setnames(as.data.table(transpose(perf)), names(perf[[1]]))
+    perf = cbind(row.id = row.id, perf)
   } else {
     perf = as.data.table(t(mlr::performance(p, measures)))
   }
@@ -61,9 +76,13 @@ measurePerformance.WrappedModel = function(object, data, target = NULL, measures
 }
 
 #' @export
-measurePerformance.default = function(object, data, target = NULL, measures,
-  local = FALSE, predict.fun = NULL) {
+measurePerformance.default = function(object, data, target = NULL,
+  measures, local = FALSE, predict.fun = NULL, row.id = seq_row(data)) {
   assertSubset(target, colnames(data), empty.ok = FALSE)
+  assertIntegerish(row.id, len = nrow(data))
+  assertList(measures, "function", names = "strict")
+  assertFunction(predict.fun, args = c("object", "newdata"), null.ok = TRUE)
+
   if (is.null(predict.fun))
     predict.fun = function(object, newdata) predict(object, newdata)
 
@@ -79,6 +98,7 @@ measurePerformance.default = function(object, data, target = NULL, measures,
         measures.fun(truth = truth[i], response = p[i])
       })
     })
+    perf = c(list(row.id = row.id), perf)
   } else {
     perf = lapply(measures, function(measures.fun) {
       measures.fun(truth = truth, response = p)

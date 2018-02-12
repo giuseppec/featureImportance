@@ -16,9 +16,9 @@ pimp = function(learner, task, resampling, measures, features = NULL,
   null.aggr = null[, lapply(.SD, mean), .SDcols = mid, by = c("features", "n.target.perm")]
 
   # split by features and compute the pvalue separately for each feature
-  sp = split(null.aggr[, ..mid], null.aggr$features)
+  sp = split(null.aggr[, mid, width = FALSE], null.aggr$features)
   ret = lapply(imp.aggr$features, function(x) {
-    importance = imp.aggr[imp.aggr$feature == x, ..mid]
+    importance = imp.aggr[imp.aggr$feature == x, mid, width = FALSE]
     null.dist = sp[[x]]
     p.value = vnapply(mid, function(i) mean(null.dist[[i]] > importance[[i]]))
     p.value = as.data.table(t(p.value))
