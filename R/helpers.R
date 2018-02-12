@@ -41,7 +41,7 @@ permuteFeature = function(data, features, keep.fixed = NULL) {
     data[, features] = sample(data[, features])
   } else {
     features = features[!is.na(features)]
-    idx = sample(seq_row(data))
+    idx = sample(BBmisc::seq_row(data))
     data[, features] = data[idx, features]
   }
   return(data)
@@ -57,7 +57,7 @@ permuteFeature = function(data, features, keep.fixed = NULL) {
 # permuteFeature3 = function(data, feature) {
 #   assertDataFrame(data)
 #   assertSubset(feature, colnames(data))
-#   idx = sample(seq_row(data))
+#   idx = sample(BBmisc::seq_row(data))
 #   col.ind = which(colnames(data) %in% feature)
 #   replace(data, list = col.ind, values = data[idx, feature])
 # }

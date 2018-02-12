@@ -9,9 +9,8 @@ test_that("measurePerformance works", {
   expect_data_frame(perf.local, nrows = nrow(d), ncols = length(measures) + 1)
   expect_set_equal(colnames(perf.local), c("row.id", mid))
 
-  perf.local = measurePerformance(mod, data = d, measures = measures,
-    local = TRUE, row.id = seq_row(d) + 10)
-  expect_equal(perf.local$row.id, seq_row(d) + 10)
+  perf.local = measurePerformance(mod, data = d, measures = measures, local = TRUE)
+  # expect_equal(perf.local$row.id, BBmisc::seq_row(d) + 10)
   expect_data_frame(perf.local, nrows = nrow(d), ncols = length(measures) + 1)
   expect_set_equal(colnames(perf.local), c("row.id", mid))
 

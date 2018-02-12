@@ -2,27 +2,15 @@
 #'
 #' @description Measures the feature importance by drop in performance.
 #'
-#' @template arg_object
-#' @template arg_data
+#' @inheritParams measurePerformance
 #' @param features [list of \code{character}] \cr
-#' A list where each element contains the names of at least one feature for which the permutation importance is computed.
+#' A list where each element contains the names of at least one feature for which the permutation importance should be computed.
 #' If a list element contains two or more features, they will be permuted block-wise (without breaking the relationship between those features).
-#' @param target [\code{character(1)}] \cr
-#' Only needed if \code{object} is not of class \code{WrappedModel} or \code{ResampleResult}.
-#' Name of the target feature to be predicted.
 #' @template arg_n.feat.perm
-#' @template arg_local
-#' @template arg_measures
 #' @param minimize [named \code{logical}] \cr
 #' Only needed if passed \code{measures} is a named list of functions.
 #' A named logical of the same length and with the same names as \code{measures} answering the question if smaller values of the measure refer to a better model performance.
-#' @template arg_predict.fun
-#' @param importance.fun [\code{function}] \cr
-#' Function with signature \code{function(permuted, unpermuted, minimize)} which defines how the permuted and unpermuted predictions are aggregated to a feature importance measure.
-#' The function takes the result of \code{\link{measurePerformance}} as input for \code{permuted} and \code{unpermuted}.
-#' The argument \code{minimize} can be used in \code{importance.fun} to change the aggregation behaivour depending on whether the measure is to be minimized or not, e.g. for the drop in performance: \cr
-#' \code{ifelse(minimize, -1, 1) * (unpermuted - permuted)} \cr
-#' The default \code{NULL} internally uses \code{permuted - unpermuted} (or \code{unpermuted - permuted}, depending on whether the measure is to be minimized or not) which refers to the drop in performance.
+#' @template arg_importance.fun
 #' @param ... Not used.
 #' @export
 featureImportance = function(object, data, features = NULL, target = NULL,
@@ -44,7 +32,8 @@ featureImportance.WrappedModel = function(object, data, features = NULL, target 
   n.feat.perm = 50, local = FALSE, measures = mlr::getDefaultMeasure(object$task.desc),
   minimize = NULL, predict.fun = NULL, importance.fun = NULL, ...) {
 
-  assertSubset(target, choices = object$task.desc$target, empty.ok = TRUE)
+  tn = getTaskTargetNames(getTaskDesc(object))
+  assertSubset(target, choices = tn, empty.ok = TRUE)
   measures = assertMeasure(measures)
   assertNull(predict.fun)
   assertNull(minimize)
@@ -56,15 +45,9 @@ featureImportance.WrappedModel = function(object, data, features = NULL, target 
   if (is.null(features))
     features = as.list(object$features)
 
-  imp = computeFeatureImportance(object, data, features, target, n.feat.perm,
-    local, measures, minimize, predict.fun, importance.fun)
-
-  makeS3Obj(
-    classes = "featureImportance",
-    importance = imp,
-    resample = NULL,
-    measures = measures
-  )
+  computeFeatureImportance(object = object, data = data, features = features, target = target,
+    n.feat.perm = n.feat.perm, local = local, measures = measures, minimize = minimize,
+    predict.fun = predict.fun, importance.fun = importance.fun)
 }
 
 #' @export
@@ -80,29 +63,13 @@ featureImportance.ResampleResult = function(object, data, features = NULL, targe
   if (is.null(target))
     target = tn
 
-  if (ts != nrow(data) | any(tn %nin% colnames(data))) {
-    warningf("Use the same data that created the ResampleResult.")
-    assertDataFrame(data, nrows = ts)
-    assertSubset(features, colnames(data))
-  }
-
   measures = assertMeasure(measures)
-
-  if (is.null(object$models))
-    stop("Use 'models = TRUE' to create the ResampleResult.")
-
   minimize = BBmisc::vlapply(measures, function(x) x$minimize)
-  # for each fold and each feature: permute the feature and measure performance on permuted feature
-  imp = computeFeatureImportance(object = object, data = data, features = features,
-    measures = measures, minimize = minimize, n.feat.perm = n.feat.perm,
-    importance.fun = importance.fun, local = local)
 
-  makeS3Obj(
-    classes = "featureImportance",
-    importance = imp,
-    resample = object,
-    measures = measures
-  )
+  # for each fold and each feature: permute the feature and measure performance on permuted feature
+  computeFeatureImportance(object = object, data = data, features = features, target = target,
+    n.feat.perm = n.feat.perm, local = local, measures = measures, minimize = minimize,
+    predict.fun = predict.fun, importance.fun = importance.fun)
 }
 
 #' @export
@@ -121,15 +88,9 @@ featureImportance.default = function(object, data, features = NULL, target = NUL
 
   # reorder if not correct
   minimize = minimize[names(measures)]
-  imp = computeFeatureImportance(object, data, features, target, n.feat.perm,
-    local, measures, minimize, predict.fun, importance.fun)
-
-  makeS3Obj(
-    classes = "featureImportance",
-    importance = imp,
-    resample = NULL,
-    measures = measures
-  )
+  computeFeatureImportance(object = object, data = data, features = features, target = target,
+    n.feat.perm = n.feat.perm, local = local, measures = measures, minimize = minimize,
+    predict.fun = predict.fun, importance.fun = importance.fun)
 }
 
 computeFeatureImportance = function(object, data, features, target = NULL,
@@ -153,10 +114,16 @@ computeFeatureImportance = function(object, data, features, target = NULL,
     feat.imp = rbindlist(feat.imp, idcol = "features")
     # replace the feature id with its corresponding feature set
     if (!is.character(features))
-      feat.imp$features = stri_paste_list(features[feat.imp$features], sep = ",") #features[feat.imp$features]
+      feat.imp$features = stri_paste_list(features[feat.imp$features], sep = ",")
+    #features[feat.imp$features]
     return(feat.imp)
   })
   imp = rbindlist(imp, idcol = "n.feat.perm")
 
-  return(imp)
+  makeS3Obj(
+    classes = "featureImportance",
+    importance = imp,
+    resample = if (inherits(object, "ResampleResult")) object else NULL,
+    measures = measures
+  )
 }

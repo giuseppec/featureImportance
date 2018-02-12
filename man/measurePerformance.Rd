@@ -5,17 +5,19 @@
 \title{Measure Performance}
 \usage{
 measurePerformance(object, data, target = NULL, measures, local = FALSE,
-  predict.fun = NULL, row.id = seq_row(data))
+  predict.fun = NULL)
 }
 \arguments{
 \item{object}{[any] \cr
-Either a \code{\link[mlr]{WrappedModel}} or any other trained model (however, the latter is experimental and you need to provide an appropriate \code{predict.fun}).}
+Either a \code{\link[mlr]{WrappedModel}} or a \code{\link[mlr]{ResampleResult}}.
+You can also provide any other trained model (however, this is experimental and you need to provide an appropriate \code{predict.fun}).}
 
 \item{data}{[\code{data.frame}] \cr
-The data for which the performance will be measured.}
+The data whose features will be permuted in order to measure their importance.
+If \code{object} is of class \code{ResampleResult}, you should use the corresponding data on which the whole resampling was performed. In any other case, you might use some independent test data that was not used to fit the model (although you could also use the train data here).}
 
 \item{target}{[\code{character(1)}] \cr
-Only needed if \code{object} is not of class \code{WrappedModel}.
+Only needed if \code{object} is not of class \code{WrappedModel} or \code{ResampleResult}.
 Name of the target feature to be predicted.}
 
 \item{measures}{[\code{\link[mlr]{Measure}} | list of \code{\link[mlr]{Measure}} | \code{function} | list of \code{function}] \cr

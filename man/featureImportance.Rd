@@ -19,7 +19,7 @@ The data whose features will be permuted in order to measure their importance.
 If \code{object} is of class \code{ResampleResult}, you should use the corresponding data on which the whole resampling was performed. In any other case, you might use some independent test data that was not used to fit the model (although you could also use the train data here).}
 
 \item{features}{[list of \code{character}] \cr
-A list where each element contains the names of at least one feature for which the permutation importance is computed.
+A list where each element contains the names of at least one feature for which the permutation importance should be computed.
 If a list element contains two or more features, they will be permuted block-wise (without breaking the relationship between those features).}
 
 \item{target}{[\code{character(1)}] \cr

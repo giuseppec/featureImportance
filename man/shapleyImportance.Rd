@@ -18,10 +18,11 @@ The data whose features will be permuted in order to measure their importance.
 If \code{object} is of class \code{ResampleResult}, you should use the corresponding data on which the whole resampling was performed. In any other case, you might use some independent test data that was not used to fit the model (although you could also use the train data here).}
 
 \item{features}{[\code{character}] \cr
-the feature(s) for which the shapley importance should be computed.}
+The feature(s) for which the shapley importance should be computed.}
 
 \item{target}{[\code{character(1)}] \cr
-The target feature.}
+Only needed if \code{object} is not of class \code{WrappedModel} or \code{ResampleResult}.
+Name of the target feature to be predicted.}
 
 \item{bound.size}{[\code{numeric(1)}] \cr
 Bound on the permutation size to compute the Shapley value (see Cohen (2007)).}

@@ -2,31 +2,24 @@
 #'
 #' @description Measures the performance on passed data.
 #'
-#' @param object [any] \cr
-#' Either a \code{\link[mlr]{WrappedModel}} or any other trained model (however, the latter is experimental and you need to provide an appropriate \code{predict.fun}).
-#' @param data [\code{data.frame}] \cr
-#' The data for which the performance will be measured.
-#' @param target [\code{character(1)}] \cr
-#' Only needed if \code{object} is not of class \code{WrappedModel}.
-#' Name of the target feature to be predicted.
+#' @template arg_object
+#' @template arg_data
+#' @template arg_target
 #' @template arg_measures
 #' @template arg_local
 #' @template arg_predict.fun
-#' @param row.id [\code{numeric}] \cr
-#' Row IDs
 #' @export
 measurePerformance = function(object, data, target = NULL,
-  measures, local = FALSE, predict.fun = NULL, row.id = seq_row(data)) {
+  measures, local = FALSE, predict.fun = NULL) {
   assertDataFrame(data)
   assertCharacter(target, null.ok = TRUE)
   assertLogical(local)
-  assertIntegerish(row.id, len = nrow(data))
   UseMethod("measurePerformance")
 }
 
 #' @export
 measurePerformance.ResampleResult = function(object, data, target = NULL,
-  measures, local = FALSE, predict.fun = NULL, row.id = seq_row(data)) {
+  measures, local = FALSE, predict.fun = NULL) {
   assertResampleResultData(object, data, target)
   measures = assertMeasure(measures)
   mid = names(measures)
@@ -36,17 +29,19 @@ measurePerformance.ResampleResult = function(object, data, target = NULL,
   perf = lapply(seq_along(object$models), function(i) {
     mod = object$models[[i]]
     train.ind = mod$subset
-    test.ind = setdiff(seq_row(data), train.ind)
-    measurePerformance(mod, data = data[test.ind, ], target = target,
-      measures = measures, local = local, predict.fun = predict.fun,
-      row.id = test.ind)
+    test.ind = setdiff(BBmisc::seq_row(data), train.ind)
+    ret = measurePerformance(mod, data = data[test.ind, ], target = target,
+      measures = measures, local = local, predict.fun = predict.fun)
+    if (local)
+      ret$row.id = test.ind
+    ret
   })
 
   perf = rbindlist(perf, idcol = "cv.iter")
 
   # aggregate results across cv.iter
   if (local)
-    perf = sortByCol(perf[, lapply(.SD, mean), .SDcols = mid, by = "row.id"], "row.id") else
+    perf = setkey(perf[, lapply(.SD, mean), .SDcols = mid, by = "row.id"], "row.id") else
       perf = perf[, lapply(.SD, mean), .SDcols = mid]
 
   return(perf)
@@ -54,7 +49,7 @@ measurePerformance.ResampleResult = function(object, data, target = NULL,
 
 #' @export
 measurePerformance.WrappedModel = function(object, data, target = NULL,
-  measures, local = FALSE, predict.fun = NULL, row.id = seq_row(data)) {
+  measures, local = FALSE, predict.fun = NULL) {
   measures = assertMeasure(measures)
 
   p = predict(object, newdata = data)
@@ -62,13 +57,13 @@ measurePerformance.WrappedModel = function(object, data, target = NULL,
   if (local) {
     # FIXME: not all measures can handle "local" importance, e.g. auc does not work.
     # We should capture this here.
-    p2 = splitPrediction(p, seq_row(p$data))
+    p2 = splitPrediction(p, BBmisc::seq_row(p$data))
     perf = lapply(seq_along(p2), function(i) {
       # this is slower: p = predict(object, newdata = data, subset = i)
       mlr::performance(p2[[i]], measures)
     })
     perf = setnames(as.data.table(transpose(perf)), names(perf[[1]]))
-    perf = cbind(row.id = row.id, perf)
+    perf = cbind(row.id = BBmisc::seq_row(data), perf)
   } else {
     perf = as.data.table(t(mlr::performance(p, measures)))
   }
@@ -77,9 +72,8 @@ measurePerformance.WrappedModel = function(object, data, target = NULL,
 
 #' @export
 measurePerformance.default = function(object, data, target = NULL,
-  measures, local = FALSE, predict.fun = NULL, row.id = seq_row(data)) {
+  measures, local = FALSE, predict.fun = NULL) {
   assertSubset(target, colnames(data), empty.ok = FALSE)
-  assertIntegerish(row.id, len = nrow(data))
   assertList(measures, "function", names = "strict")
   assertFunction(predict.fun, args = c("object", "newdata"), null.ok = TRUE)
 
@@ -98,7 +92,7 @@ measurePerformance.default = function(object, data, target = NULL,
         measures.fun(truth = truth[i], response = p[i])
       })
     })
-    perf = c(list(row.id = row.id), perf)
+    perf = c(list(row.id = BBmisc::seq_row(data)), perf)
   } else {
     perf = lapply(measures, function(measures.fun) {
       measures.fun(truth = truth, response = p)

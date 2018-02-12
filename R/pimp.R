@@ -41,7 +41,7 @@ pimp = function(learner, task, resampling, measures, features = NULL,
 print.pimp = function(x) {
   catf("Object of class 'pimp'")
   catf("Feature importance with p-values:")
-  print(merge(setkey(x$importance, features), setkey(x$p.value, features),
+  print(merge(setkey(x$importance, "features"), setkey(x$p.value, "features"),
     suffixes = c(".importance", ".pvalue")))
 }
 
@@ -60,8 +60,24 @@ nullImportanceIteration = function(i, learner, task, resampling, measures, featu
   d = mlr::getTaskData(task)
   target = mlr::getTaskTargetNames(task)
   # FIXME: maybe do not use unexported changeData here, can be problematic on CRAN
-  task.null = mlr:::changeData(task, data = permuteFeature(d, target))
+  task.null = changeTask(task, data = permuteFeature(d, target))
   imp = featureImportanceLearner(learner = learner, task.null, resampling = resampling,
     measures = measures, features = features, n.feat.perm = n.feat.perm)
   return(imp$importance)
+}
+
+# modified version of unexported mlr:::changeData
+changeTask = function(task, data, costs, weights) {
+  if (missing(data))
+    data = getTaskData(task)
+  if (missing(costs))
+    costs = getTaskCosts(task)
+  if (missing(weights))
+    weights = task$weights
+  task$env = new.env(parent = emptyenv())
+  task$env$data = data
+  if (is.null(weights))
+    task["weights"] = list(NULL)
+  else task$weights = weights
+  return(task)
 }
