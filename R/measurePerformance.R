@@ -73,7 +73,8 @@ measurePerformance.WrappedModel = function(object, data, target = NULL,
 #' @export
 measurePerformance.default = function(object, data, target = NULL,
   measures, local = FALSE, predict.fun = NULL) {
-  assertSubset(target, colnames(data), empty.ok = FALSE)
+  #assertSubset(target, colnames(data), empty.ok = FALSE)
+  assertString(target)
   assertList(measures, "function", names = "strict")
   assertFunction(predict.fun, args = c("object", "newdata"), null.ok = TRUE)
 

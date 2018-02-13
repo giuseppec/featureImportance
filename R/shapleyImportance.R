@@ -9,7 +9,7 @@
 #' @param features [\code{character}] \cr
 #' The feature(s) for which the shapley importance should be computed.
 #' @param bound.size [\code{numeric(1)}] \cr
-#' Bound on the permutation size to compute the Shapley value (see Cohen (2007)).
+#' Bound on the permutation size to compute the Shapley value (see Cohen et al. (2007)).
 #' @param n.shapley.perm [\code{numeric(1)} | \code{"all.unique"}] \cr
 #' The number of permutations that should be used for the shapley value.
 #' Use \code{"all.unique"} to use all unique permutations.
@@ -19,11 +19,12 @@
 #' Function that defines the value function which is used to compute the shapley value.
 #' @export
 shapleyImportance = function(object, data, features, target, bound.size = NULL,
-  n.feat.perm = 50, n.shapley.perm = 120, measures,
+  n.feat.perm = 50, n.shapley.perm = 120, measures, minimize = NULL,
+  predict.fun = NULL,
   value.function = calculateValueFunctionImportance) {
   assertSubset(features, colnames(data))
   assertSubset(target, colnames(data))
-  measures = assertMeasure(measures)
+  #measures = assertMeasure(measures)
   all.feats = setdiff(colnames(data), target)
   perm = generatePermutations(all.feats, n.shapley.perm = n.shapley.perm,
     bound.size = bound.size)
@@ -40,8 +41,9 @@ shapleyImportance = function(object, data, features, target, bound.size = NULL,
   vf = pbapply::pblapply(values, function(f) {
     opb = pboptions(type = "none")
     on.exit(pboptions(opb))
-    value.function(object = object, data = data, measures = measures,
-      target = target, n.feat.perm = n.feat.perm, features = f)
+    value.function(features = f, object = object, data = data, target = target,
+      n.feat.perm = n.feat.perm, measures = measures, minimize = minimize,
+      predict.fun = predict.fun)
   })
   vf = rbindlist(vf)
   vf$features = stri_paste_list(values, ",")
@@ -71,11 +73,11 @@ shapleyImportance = function(object, data, features, target, bound.size = NULL,
 }
 
 print.ShapleyImportance = function(x, ...) {
-  measures = collapse(vcapply(x$measures, function(m) m$id))
+  #measures = collapse(vcapply(x$measures, function(m) m$id))
   #BBmisc::listToShortString(lapply(x$measures, function(m) m$id))
 
   catf("Object of class 'ShapleyImportance'")
-  catf("Measures used: %s", measures)
+  #catf("Measures used: %s", measures)
   catf("Number of permutations: %s", length(x$permutations))
   catf("Shapley value(s):")
   print(x$shapley.value, ...)

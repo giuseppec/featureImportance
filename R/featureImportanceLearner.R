@@ -1,3 +1,8 @@
+#' @inherit featureImportance
+#' @param learner [\code{\link[mlr]{Learner}}] \cr
+#' The learner.
+#' @inheritParams mlr::resample
+#' @export
 featureImportanceLearner = function(learner, task, resampling,
   measures = mlr::getDefaultMeasure(task),
   features = as.list(mlr::getTaskFeatureNames(task)), n.feat.perm = 50, ...) {

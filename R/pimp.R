@@ -1,3 +1,12 @@
+#' @title Permutation Importance
+#' @description Implementation of PIMP (see Altmann et al. (2010))
+#' @references Altmann, A., Tolosi, L., Sander, O., & Lengauer, T. (2010).
+#' Permutation importance: a corrected feature importance measure.
+#' Bioinformatics, 26(10), 1340-1347.
+#' @inheritParams featureImportanceLearner
+#' @param n.target.perm [\code{numeric(1)}] \cr
+#' The number of permutations of the target used to compute a null distribution for the importance values.
+#' @export
 pimp = function(learner, task, resampling, measures, features = NULL,
   n.feat.perm = 1, n.target.perm = 1) {
   measures = assertMeasure(measures)
