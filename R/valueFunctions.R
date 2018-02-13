@@ -8,7 +8,7 @@ calculateValueFunctionImportance = function(features, object, data, target = NUL
     predict.fun = predict.fun, n.feat.perm = n.feat.perm)
 
   # aggregate importance
-  imp.aggr = imp$importance[, lapply(.SD, mean), .SDcols = names(imp$measures),  by = "features"]
+  imp.aggr = imp$importance[, lapply(.SD, mean), .SDcols = names(imp$measures), by = "features"]
 
   return(imp.aggr)
 }
@@ -32,11 +32,10 @@ calculateValueFunctionPerformance = function(features, object, data, target = NU
   })
   ret = rbindlist(ret)
 
-  # we can remove empty.set which is always substracted as we use differences of value functions
+  # we can remove empty.set as value functions are always substracted
   #empty.set = measurePerformance(object, data = permuteFeature(data, features = all.feats),
   #  target = target, measures = measures, predict.fun = predict.fun)
-  # FIXME: ret - empty.set when measure should be maximized
-  #return(empty.set - ret)
+  #return(empty.set - ret) # ret - empty.set when measure should be maximized
 
   return(ret[, lapply(.SD, mean), by = "features"])
 }
