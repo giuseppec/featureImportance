@@ -15,5 +15,5 @@ An R package to assess feature importance
 Install the development version from GitHub (using `devtools`)
 
 ```r
-devtools::install_github("giuseppec/ame")
+devtools::install_github("giuseppec/featureImportance")
 ```
