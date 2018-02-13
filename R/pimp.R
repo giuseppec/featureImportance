@@ -52,7 +52,9 @@ nullImportance = function(learner, task, resampling, measures, features = NULL,
     features = as.list(getTaskFeatureNames(task))
   args = list(learner = learner, task = task, resampling = resampling,
     measures = measures, features = features, n.feat.perm = n.feat.perm)
-  ret = parallelMap::parallelMap(nullImportanceIteration, i = seq_len(n.target.perm), more.args = args)
+  #parallelLibrary("featureImportance", master = FALSE, level = "n.target.perm", show.info = FALSE)
+  ret = parallelMap::parallelMap(nullImportanceIteration, i = seq_len(n.target.perm),
+    more.args = args)
   rbindlist(ret, idcol = "n.target.perm")
 }
 

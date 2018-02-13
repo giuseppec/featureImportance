@@ -6,8 +6,10 @@
 #' @import stringi
 #' @import pbapply
 #' @importFrom stats predict setNames var
+NULL
 
-.onAttach = function(libname, pkgname) {
-  parallelMap::parallelRegisterLevels(package = "featureImportance",
-    levels = c("feature.permutation", "target.permutation"))
+.onLoad = function(libname, pkgname) {
+  backports::import(pkgname)
+  # parallelMap::parallelRegisterLevels(package = "featureImportance",
+  #   levels = c("n.target.perm", "n.feat.perm"))
 }

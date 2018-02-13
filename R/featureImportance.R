@@ -32,8 +32,7 @@ featureImportance.WrappedModel = function(object, data, features = NULL, target 
   n.feat.perm = 50, local = FALSE, measures = mlr::getDefaultMeasure(object$task.desc),
   minimize = NULL, predict.fun = NULL, importance.fun = NULL, ...) {
 
-  tn = getTaskTargetNames(getTaskDesc(object))
-  assertSubset(target, choices = tn, empty.ok = TRUE)
+  assertSubset(target, choices = getTaskTargetNames(getTaskDesc(object)), empty.ok = TRUE)
   measures = assertMeasure(measures)
   assertNull(predict.fun)
   assertNull(minimize)
@@ -55,15 +54,12 @@ featureImportance.ResampleResult = function(object, data, features = NULL, targe
   n.feat.perm = 50, local = FALSE, measures = mlr::getDefaultMeasure(object$task.desc), minimize = NULL,
   predict.fun = NULL, importance.fun = NULL, ...) {
 
-  td = getTaskDesc(object)
-  ts = getTaskSize(td)
-  tn = getTaskTargetNames(td)
-
-  assertSubset(target, choices = tn, empty.ok = TRUE)
-  if (is.null(target))
-    target = tn
-
+  assertResampleResultData(object, data, target)
   measures = assertMeasure(measures)
+
+  # set defaults
+  if (is.null(target))
+    target = getTaskTargetNames(getTaskDesc(object))
   minimize = BBmisc::vlapply(measures, function(x) x$minimize)
 
   # for each fold and each feature: permute the feature and measure performance on permuted feature
@@ -83,11 +79,12 @@ featureImportance.default = function(object, data, features = NULL, target = NUL
   assertSetEqual(names(measures), names(minimize))
   assertFunction(predict.fun, args = c("object", "newdata"), null.ok = TRUE)
 
+  # set defaults
   if (is.null(features))
     features = as.list(setdiff(colnames(data), target))
-
   # reorder if not correct
   minimize = minimize[names(measures)]
+
   computeFeatureImportance(object = object, data = data, features = features, target = target,
     n.feat.perm = n.feat.perm, local = local, measures = measures, minimize = minimize,
     predict.fun = predict.fun, importance.fun = importance.fun)
@@ -101,24 +98,19 @@ computeFeatureImportance = function(object, data, features, target = NULL,
   unpermuted.perf = measurePerformance(object, data = data, target = target,
     measures = measures, local = local, predict.fun = predict.fun)
 
-  # FIXME: allow Parallelization
-  imp = lapply(seq_len(n.feat.perm), function(i) {
-    feat.imp = lapply(features, function(feature) {
-      # measure performance when feature is shuffled
-      permuted.perf = measurePerformance(object, data = permuteFeature(data, features = feature),
-        target = target, measures = measures, local = local, predict.fun = predict.fun)
-      # Compare true and shuffled performance
-      measureFeatureImportance(permuted.perf, unpermuted.perf, minimize = minimize,
-        importance.fun = importance.fun)
-    })
-    feat.imp = rbindlist(feat.imp, idcol = "features")
-    # replace the feature id with its corresponding feature set
-    if (!is.character(features))
-      feat.imp$features = stri_paste_list(features[feat.imp$features], sep = ",")
-    #features[feat.imp$features]
-    return(feat.imp)
-  })
+  # build arg list
+  args = list(unpermuted.perf = unpermuted.perf, object = object, data = data,
+    features = features, target = target, measures = measures, local = local,
+    predict.fun = predict.fun, minimize = minimize, importance.fun = importance.fun)
+
+  # Parallelize over n.feat.perm
+  imp = parallelMap::parallelMap(computeFeatureImportanceIteration,
+    i = seq_len(n.feat.perm), more.args = args)
   imp = rbindlist(imp, idcol = "n.feat.perm")
+
+  # replace the feature column (which is a vector of id) with its corresponding feature sets
+  if (!is.character(imp$features))
+    imp$features = stri_paste_list(features[imp$features], sep = ",")
 
   makeS3Obj(
     classes = "featureImportance",
@@ -126,4 +118,23 @@ computeFeatureImportance = function(object, data, features, target = NULL,
     resample = if (inherits(object, "ResampleResult")) object else NULL,
     measures = measures
   )
+}
+
+computeFeatureImportanceIteration = function(i, features, unpermuted.perf, object,
+  data, target, measures, local, predict.fun, minimize, importance.fun) {
+
+  # compute importance for each feature
+  feat.imp = lapply(features, function(feature) {
+    # permute feature
+    data.perm = permuteFeature(data, features = feature)
+    # measure performance when feature is shuffled
+    permuted.perf = measurePerformance(object, data = data.perm, target = target,
+      measures = measures, local = local, predict.fun = predict.fun)
+    # Compare true and shuffled performance
+    measureFeatureImportance(permuted.perf, unpermuted.perf, minimize = minimize,
+      importance.fun = importance.fun)
+  })
+  feat.imp = rbindlist(feat.imp, idcol = "features")
+
+  return(feat.imp)
 }
