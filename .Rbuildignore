@@ -2,3 +2,4 @@
 ^\.Rproj\.user$
 ^attic
 ^man-roxygen
+.travis.yml

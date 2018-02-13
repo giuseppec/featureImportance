@@ -1,0 +1,27 @@
+language: r
+sudo: false
+r_check_args: "--as-cran --run-donttest"
+
+os:
+  - linux
+
+r_packages:
+  - covr
+
+r_github_packages:
+  - mlr-org/mlr
+  - berndbischl/BBmisc
+  - berndbischl/ParamHelpers
+
+cache:
+  packages: true
+
+after_success:
+  - Rscript -e 'library(covr);codecov()'
+
+notifications:
+  email:
+    recipients:
+      - giuseppe.casalicchio@stat.uni-muenchen.de
+    on_success: never
+    on_failure: never

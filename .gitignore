@@ -1,3 +1,17 @@
 .Rproj.user
 .Rhistory
 .RData
+.Ruserdata
+cache/
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.tex
+*.eps
+*.pdf
+*.Rproj*
+*.synctex.gz
+.Rproj.user
+*.Rhistory
