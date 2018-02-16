@@ -55,19 +55,20 @@ measureFeatureImportance = function(permuted.perf, unpermuted.perf, minimize,
 # @param data the dataset
 # @param features features to be permuted (block-wise)
 # @param keep.fixed which column should be kept fixed?
-permuteFeature = function(data, features, keep.fixed = NULL) {
+permuteFeature = function(data, features) {
   #assertDataFrame(data)
   #assertSubset(features, colnames(data))
   # FIXME: do we want to permute the whole block-matrix of features or permute each single feature separately? Here we permute the block-matrix containing all features in 'features'.
-  if (length(features) == 1) {
-    if (is.na(features))
+  if (any(is.na(features))) {
+    if (length(features) == 1) {
       return(data)
-    data[, features] = sample(data[, features])
-  } else {
-    features = features[!is.na(features)]
-    idx = sample(BBmisc::seq_row(data))
-    data[, features] = data[idx, features]
+    } else {
+      features = features[!is.na(features)]
+    }
   }
+  # dim might be faster https://statisfaction.wordpress.com/2017/12/10/nrow-references-and-copies/
+  size = nrow(data)
+  data[, features] = data[sample.int(size), features]
   return(data)
 }
 

@@ -62,8 +62,11 @@ measurePerformance.WrappedModel = function(object, data, target = NULL,
       # this is slower: p = predict(object, newdata = data, subset = i)
       mlr::performance(p2[[i]], measures)
     })
-    perf = setnames(as.data.table(transpose(perf)), names(perf[[1]]))
-    perf = cbind(row.id = BBmisc::seq_row(data), perf)
+    cn = names(perf[[1]])
+    perf = setnames(as.data.table(transpose(perf)), cn)
+    perf$row.id = BBmisc::seq_row(data)
+    cn = c("row.id", cn)
+    perf = setcolorder(perf, cn)
   } else {
     perf = as.data.table(t(mlr::performance(p, measures)))
   }
