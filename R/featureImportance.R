@@ -98,15 +98,23 @@ computeFeatureImportance = function(object, data, features, target = NULL,
   unpermuted.perf = measurePerformance(object, data = data, target = target,
     measures = measures, local = local, predict.fun = predict.fun)
 
-  # build arg list
-  args = list(unpermuted.perf = unpermuted.perf, object = object, data = data,
-    features = features, target = target, measures = measures, local = local,
-    predict.fun = predict.fun, minimize = minimize, importance.fun = importance.fun)
+  # # build arg list
+  # args = list(unpermuted.perf = unpermuted.perf, object = object, data = data,
+  #   features = features, target = target, measures = measures, local = local,
+  #   predict.fun = predict.fun, minimize = minimize, importance.fun = importance.fun)
+  #
+  # # Parallelize over n.feat.perm
+  # imp = parallelMap::parallelMap(computeFeatureImportanceIteration,
+  #   i = seq_len(n.feat.perm), more.args = args)
+  # imp = rbindlist(imp, idcol = "n.feat.perm")
+
+  #
+  data = rbindlist(lapply(1:n.feat.perm, function(i) data), idcol = "n.feat.perm")
 
   # Parallelize over n.feat.perm
-  imp = parallelMap::parallelMap(computeFeatureImportanceIteration,
-    i = seq_len(n.feat.perm), more.args = args)
-  imp = rbindlist(imp, idcol = "n.feat.perm")
+  imp = computeFeatureImportanceIteration(unpermuted.perf = unpermuted.perf, object = object, data = data,
+    features = features, target = target, measures = measures, local = local,
+    predict.fun = predict.fun, minimize = minimize, importance.fun = importance.fun)
 
   # replace the feature column (which is a vector of id) with its corresponding feature sets
   if (!is.character(imp$features))
