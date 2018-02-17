@@ -1,3 +1,4 @@
+#' @export
 calculateValueFunctionImportance = function(features, object, data, target = NULL,
   n.feat.perm = 50, measures, predict.fun = NULL) {
   assertCharacter(features)
@@ -13,6 +14,7 @@ calculateValueFunctionImportance = function(features, object, data, target = NUL
   return(imp.aggr)
 }
 
+#' @export
 calculateValueFunctionPerformance = function(features, object, data, target = NULL,
   n.feat.perm = 50, measures, predict.fun = NULL) {
   assertCharacter(features)
