@@ -5,9 +5,9 @@
 \title{Feature Importance}
 \usage{
 featureImportance(object, data, features = NULL, target = NULL,
-  n.feat.perm = 50, local = FALSE, measures, minimize = NULL,
-  predict.fun = NULL, importance.fun = function(permuted, unpermuted,
-  minimize) ifelse(minimize, -1, 1) * (unpermuted - permuted), ...)
+  n.feat.perm = 50, local = FALSE, measures, predict.fun = NULL,
+  importance.fun = function(permuted, unpermuted) return(unpermuted -
+  permuted), ...)
 }
 \arguments{
 \item{object}{[any] \cr
@@ -40,21 +40,15 @@ Performance measure(s) used to measure the model performance.
 Can also be a named list of function with signature \code{function(y, pred)},
 where \code{y} and \code{pred} are vectors containing the true and the predicted values of the target.}
 
-\item{minimize}{[named \code{logical}] \cr
-Only needed if passed \code{measures} is a named list of functions.
-A named logical of the same length and with the same names as \code{measures} answering the question if smaller values of the measure refer to a better model performance.}
-
 \item{predict.fun}{[\code{function}] \cr
 Only needed if \code{object} is not of class \code{WrappedModel} or \code{ResampleResult}.
 The signature must be \code{function(object, newdata)} and the function should always return a vector of predictions.
 The default \code{NULL} internally uses \code{predict(object, newdata = newdata)}.}
 
 \item{importance.fun}{[\code{function}] \cr
-Function with signature \code{function(permuted, unpermuted, minimize)} which defines how the permuted and unpermuted predictions are aggregated to a feature importance measure.
+Function with signature \code{function(permuted, unpermuted)} which defines how \code{permuted} and \code{unpermuted} are aggregated to a feature importance measure.
 The function takes the result of \code{\link{measurePerformance}} as input for \code{permuted} and \code{unpermuted}.
-The argument \code{minimize} can be used in \code{importance.fun} to change the aggregation behaivour depending on whether the measure is to be minimized or not, e.g. for the drop in performance: \cr
-\code{ifelse(minimize, -1, 1) * (unpermuted - permuted)} \cr
-The default \code{NULL} internally uses \code{permuted - unpermuted} (or \code{unpermuted - permuted}, depending on whether the measure is to be minimized or not) which refers to the drop in performance.}
+The default \code{NULL} internally uses \code{unpermuted - permuted} which refers to the drop in performance if the measure is to be maximized (i.e., if higher values of the measure refer to better performance).}
 
 \item{...}{Not used.}
 }

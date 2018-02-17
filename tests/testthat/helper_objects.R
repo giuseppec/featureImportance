@@ -18,7 +18,7 @@ mid = BBmisc::vcapply(measures, function(x) x$id)
 
 # Define equivalent measures using functions
 measures.fun = list(acc = mlr::measureACC, mmce = mlr::measureMMCE)
-minimize = c(acc = FALSE, mmce = TRUE)
+#minimize = c(acc = FALSE, mmce = TRUE)
 mid.fun = names(measures.fun)
 
 # Define repetitions for permutations
