@@ -1,10 +1,10 @@
 calculateValueFunctionImportance = function(features, object, data, target = NULL,
-  n.feat.perm = 50, measures, minimize = NULL, predict.fun = NULL) {
+  n.feat.perm = 50, measures, predict.fun = NULL) {
   assertCharacter(features)
   features = list(features) # compute importance for whole block
 
   imp = featureImportance(object = object, data = data, features = features,
-    target = target, measures = measures, minimize = minimize,
+    target = target, measures = measures,
     predict.fun = predict.fun, n.feat.perm = n.feat.perm)
 
   # aggregate importance
@@ -14,7 +14,7 @@ calculateValueFunctionImportance = function(features, object, data, target = NUL
 }
 
 calculateValueFunctionPerformance = function(features, object, data, target = NULL,
-  n.feat.perm = 50, measures, minimize = NULL, predict.fun = NULL) {
+  n.feat.perm = 50, measures, predict.fun = NULL) {
   assertCharacter(features)
 
   all.feats = setdiff(colnames(data), target)

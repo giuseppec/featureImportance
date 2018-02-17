@@ -9,14 +9,14 @@ test_that("measureFeatureImportance works with WrappedModel and ResampleResult",
     perf1 = measurePerformance(m, data = d, measures = measures, local = FALSE)
     perf2 = measurePerformance(m, data = d2, measures = measures, local = FALSE)
 
-    imp12 = measureFeatureImportance(perf1, perf2, minimize)
-    imp21 = measureFeatureImportance(perf2, perf1, minimize)
+    imp12 = measureFeatureImportance(perf1, perf2)
+    imp21 = measureFeatureImportance(perf2, perf1)
     expect_equal(imp12, -imp21)
-    expect_true(all(measureFeatureImportance(perf1, perf1, minimize) == 0))
+    expect_true(all(measureFeatureImportance(perf1, perf1) == 0))
 
     perf1.local = measurePerformance(m, data = d, measures = measures, local = TRUE)
     perf2.local = measurePerformance(m, data = d2, measures = measures, local = TRUE)
-    imp12.local = measureFeatureImportance(perf1.local, perf2.local, minimize)
+    imp12.local = measureFeatureImportance(perf1.local, perf2.local)
     expect_data_table(imp12.local, ncols = ncol(perf1.local), nrows = nrow(perf1.local))
     expect_names(colnames(imp12.local), identical.to = colnames(perf1.local))
 

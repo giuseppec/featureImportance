@@ -28,22 +28,40 @@ assertResampleResultData = function(object, data, target) {
   }
 }
 
+guessPerformanceMeasureProperties = function(data, target, pred = NULL) {
+  y = data[[target]]
+  # guess task from target
+  if (is.factor(y)) {
+    properties = "classif"
+    if (nlevels(y) > 2) {
+      properties = c(properties, "classif.multi")
+    }
+  } else {
+    properties = "regr"
+  }
+  # guess pred
+  if (!is.null(pred)) {
+    if (is.matrix(pred) | (!is.factor(pred) & is.factor(y)))  {
+      properties = c(properties, "req.prob")
+    }
+  }
+  return(properties)
+}
+
 # measures the drop in performance for a given (true) performance and the performance when a feature was shuffled
 # @param permuted.perf a vector of the performance(s) when a feature was shuffled
 # @param unpermuted.perf a vector of the true performance(s)
 # @param measures the performance measures that have been used: if big values for the measure are better, the drop in performance is true - permuted (negative "drop" values are performance "gains")
-measureFeatureImportance = function(permuted.perf, unpermuted.perf, minimize,
-  importance.fun = NULL) {
-  #assertLogical(minimize, len = ncol(permuted.perf))
+measureFeatureImportance = function(permuted.perf, unpermuted.perf, importance.fun = NULL) {
   mid = setdiff(colnames(permuted.perf), c("row.id", "cv.iter"))
 
   if (is.null(importance.fun)) {
-    importance.fun = function(permuted, unpermuted, minimize)
-      ifelse(minimize, -1, 1) * (unpermuted - permuted)
+    importance.fun = function(permuted, unpermuted)
+      (unpermuted - permuted)
   }
 
   fi = lapply(mid, function(i)
-    importance.fun(permuted.perf[[i]], unpermuted.perf[[i]], minimize[i]))
+    importance.fun(permuted.perf[[i]], unpermuted.perf[[i]]))
 
   fi = setnames(as.data.table(fi), mid)
 

@@ -81,11 +81,11 @@ measurePerformance.default = function(object, data, target = NULL,
   assertList(measures, "function", names = "strict")
   assertFunction(predict.fun, args = c("object", "newdata"), null.ok = TRUE)
 
+  truth = data[[target]]
   if (is.null(predict.fun))
     predict.fun = function(object, newdata) predict(object, newdata)
 
   p = predict.fun(object, newdata = data)
-  truth = data[[target]]
 
   if (!(is.vector(p) | is.factor(p)))
     stop("Make sure that 'predict.fun' returns a vector.")

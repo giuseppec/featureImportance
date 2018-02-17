@@ -8,13 +8,13 @@ test_that("featureImportance with WrappedModel works", {
   nrow = length(feat)*n.feat.perm
   expect_data_table(imp, nrows = nrow)
   expect_set_equal(colnames(imp), c("features", "n.feat.perm", mid))
-  expect_equal(imp$acc, imp$mmce)
+  expect_equal(imp$acc, -imp$mmce)
   expect_equal(stri_split_fixed(unique(imp$features), ","), feat)
 
   # check if using mod$learner.model yields the same importances
   set.seed(1)
   imp2 = featureImportance(mod$learner.model, data = d, target = target, features = feat, n.feat.perm = n.feat.perm,
-    measures = measures.fun, minimize = minimize, local = FALSE, predict.fun = predict.fun)
+    measures = measures.fun, local = FALSE, predict.fun = predict.fun)
   imp2 = imp2$importance
   expect_identical(imp, imp2)
 
@@ -24,7 +24,7 @@ test_that("featureImportance with WrappedModel works", {
   nrow = length(feat)*n.feat.perm*nrow(d)
   expect_data_table(imp, nrows = nrow)
   expect_set_equal(colnames(imp), c("features", "n.feat.perm", "row.id", mid))
-  expect_equal(imp$acc, imp$mmce)
+  expect_equal(imp$acc, -imp$mmce)
   expect_equal(stri_split_fixed(unique(imp$features), ","), feat)
 })
 
@@ -47,7 +47,7 @@ test_that("featureImportance with ResampleResult works", {
     nrow = length(feat)*length(unique(unlist(rin$test.inds)))*n.feat.perm
 
     expect_data_table(imp.local, nrows = nrow)
-    expect_equal(imp.local$acc, imp.local$mmce)
+    expect_equal(imp.local$acc, -imp.local$mmce)
     expect_equal(stri_split_fixed(unique(imp.local$features), ","), feat)
     expect_set_equal(colnames(imp.local), c("features", "n.feat.perm", "row.id", mid))
     expect_set_equal(res$pred$data$id, imp.local$row.id)

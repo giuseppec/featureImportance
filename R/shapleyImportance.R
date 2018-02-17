@@ -19,7 +19,7 @@
 #' Function that defines the value function which is used to compute the shapley value.
 #' @export
 shapleyImportance = function(object, data, features, target, bound.size = NULL,
-  n.feat.perm = 50, n.shapley.perm = 120, measures, minimize = NULL,
+  n.feat.perm = 50, n.shapley.perm = 120, measures,
   predict.fun = NULL,
   value.function = calculateValueFunctionImportance) {
   assertSubset(features, colnames(data))
@@ -42,7 +42,7 @@ shapleyImportance = function(object, data, features, target, bound.size = NULL,
     opb = pboptions(type = "none")
     on.exit(pboptions(opb))
     value.function(features = f, object = object, data = data, target = target,
-      n.feat.perm = n.feat.perm, measures = measures, minimize = minimize,
+      n.feat.perm = n.feat.perm, measures = measures,
       predict.fun = predict.fun)
   })
   vf = rbindlist(vf)

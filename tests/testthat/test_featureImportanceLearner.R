@@ -26,7 +26,7 @@ test_that("featureImportanceLearner works", {
     nrow = length(feat)*length(unique(unlist(rin$test.inds)))*n.feat.perm
 
     expect_data_table(imp.local, nrows = nrow)
-    expect_equal(imp.local$acc, imp.local$mmce)
+    expect_equal(imp.local$acc, -imp.local$mmce)
     expect_equal(stri_split_fixed(unique(imp.local$features), ","), feat)
     expect_set_equal(colnames(imp.local), c("features", "n.feat.perm", "row.id", mid))
     expect_set_equal(res$pred$data$id, imp.local$row.id)
