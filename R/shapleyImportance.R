@@ -38,13 +38,20 @@ shapleyImportance = function(object, data, features, target, bound.size = NULL,
 
   # compute value function for all unique value functions
   # FIXME: allow parallelization
-  vf = pbapply::pblapply(values, function(f) {
-    opb = pboptions(type = "none")
-    on.exit(pboptions(opb))
-    value.function(features = f, object = object, data = data, target = target,
-      n.feat.perm = n.feat.perm, measures = measures,
-      predict.fun = predict.fun)
-  })
+  # vf = pbapply::pblapply(values, function(f) {
+  #   opb = pboptions(type = "none")
+  #   on.exit(pboptions(opb))
+  #   value.function(features = f, object = object, data = data, target = target,
+  #     n.feat.perm = n.feat.perm, measures = measures,
+  #     predict.fun = predict.fun)
+  # })
+
+  args = list(object = object, data = data, target = target,
+    n.feat.perm = n.feat.perm, measures = measures,
+    predict.fun = predict.fun)
+  vf = parallelMap::parallelMap(value.function, features = values,
+    more.args = args)
+
   vf = rbindlist(vf)
   vf$features = stri_paste_list(values, ",")
 
