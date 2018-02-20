@@ -28,24 +28,54 @@ assertResampleResultData = function(object, data, target) {
   }
 }
 
-guessPerformanceMeasureProperties = function(data, target, pred = NULL) {
-  y = data[[target]]
-  # guess task from target
-  if (is.factor(y)) {
-    properties = "classif"
-    if (nlevels(y) > 2) {
-      properties = c(properties, "classif.multi")
+# guessPerformanceMeasureProperties = function(data, target, pred = NULL) {
+#   y = data[[target]]
+#   # guess task from target
+#   if (is.factor(y)) {
+#     properties = "classif"
+#     if (nlevels(y) > 2) {
+#       properties = c(properties, "classif.multi")
+#     }
+#   } else {
+#     properties = "regr"
+#   }
+#   # guess pred
+#   if (!is.null(pred)) {
+#     if (is.matrix(pred) | (!is.factor(pred) & is.factor(y)))  {
+#       properties = c(properties, "req.prob")
+#     }
+#   }
+#   return(properties)
+# }
+
+checkPrediction = function(y, p) {
+  UseMethod("checkPrediction")
+}
+
+checkPrediction.factor = function(y, p) {
+  lvls = levels(y)
+  if (is.factor(p)) {
+    # predict classes: classes must be subset of levels of y
+    assertFactor(p, levels = lvls)
+    p = factor(p, levels = lvls)
+  } else if (is.matrix(p)) {
+    # predict probabilities: prediction should return matrix of probabilities
+    if (length(lvls) == ncol(p)) {
+      assertNames(colnames(p), must.include = lvls)
+    } else {
+      stopf("'predict.fun' returns an object of class '%s' instead of a named matrix of probabilities!", class(p)[1L])
     }
-  } else {
-    properties = "regr"
   }
-  # guess pred
-  if (!is.null(pred)) {
-    if (is.matrix(pred) | (!is.factor(pred) & is.factor(y)))  {
-      properties = c(properties, "req.prob")
-    }
-  }
-  return(properties)
+  p
+}
+
+checkPrediction.character = function(y, p) {
+  checkPrediction(as.factor(y), p)
+}
+
+checkPrediction.default = function(y, p) {
+  assertVector(p)
+  p
 }
 
 # measures the drop in performance for a given (true) performance and the performance when a feature was shuffled

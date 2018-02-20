@@ -86,9 +86,7 @@ measurePerformance.default = function(object, data, target = NULL,
     predict.fun = function(object, newdata) predict(object, newdata)
 
   p = predict.fun(object, newdata = data)
-
-  if (!(is.vector(p) | is.factor(p)))
-    stop("Make sure that 'predict.fun' returns a vector.")
+  p = checkPrediction(truth, p)
 
   if (local) {
     perf = lapply(measures, function(measures.fun) {
