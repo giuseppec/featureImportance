@@ -48,36 +48,6 @@ assertResampleResultData = function(object, data, target) {
 #   return(properties)
 # }
 
-checkPrediction = function(y, p) {
-  UseMethod("checkPrediction")
-}
-
-checkPrediction.factor = function(y, p) {
-  lvls = levels(y)
-  if (is.factor(p)) {
-    # predict classes: classes must be subset of levels of y
-    assertFactor(p, levels = lvls)
-    p = factor(p, levels = lvls)
-  } else if (is.matrix(p)) {
-    # predict probabilities: prediction should return matrix of probabilities
-    if (length(lvls) == ncol(p)) {
-      assertNames(colnames(p), must.include = lvls)
-    } else {
-      stopf("'predict.fun' returns an object of class '%s' instead of a named matrix of probabilities!", class(p)[1L])
-    }
-  }
-  p
-}
-
-checkPrediction.character = function(y, p) {
-  checkPrediction(as.factor(y), p)
-}
-
-checkPrediction.default = function(y, p) {
-  assertVector(p)
-  p
-}
-
 # measures the drop in performance for a given (true) performance and the performance when a feature was shuffled
 # @param permuted.perf a vector of the performance(s) when a feature was shuffled
 # @param unpermuted.perf a vector of the true performance(s)
