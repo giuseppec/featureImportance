@@ -7,14 +7,14 @@
 #' @template arg_target
 #' @template arg_predict.fun
 #' @export
-createPrediction = function(object, data, target = NULL, predict.fun = NULL) {
+createModelPrediction = function(object, data, target = NULL, predict.fun = NULL) {
   assertDataFrame(data)
   assertCharacter(target, null.ok = TRUE)
-  UseMethod("createPrediction")
+  UseMethod("createModelPrediction")
 }
 
 #' @export
-createPrediction.WrappedModel = function(object, data, target = NULL, predict.fun = NULL) {
+createModelPrediction.WrappedModel = function(object, data, target = NULL, predict.fun = NULL) {
   target = getTaskTargetNames(getTaskDesc(object))
   predict.fun = function(object, newdata) {
     p = predict(object, newdata = newdata)
@@ -39,11 +39,11 @@ createPrediction.WrappedModel = function(object, data, target = NULL, predict.fu
     return(ret)
   }
 
-  createPrediction.default(object, data, target = target, predict.fun = predict.fun)
+  createModelPrediction.default(object, data, target = target, predict.fun = predict.fun)
 }
 
 #' @export
-createPrediction.default = function(object, data, target = NULL, predict.fun = NULL) {
+createModelPrediction.default = function(object, data, target = NULL, predict.fun = NULL) {
   assertString(target)
   assertFunction(predict.fun, args = c("object", "newdata"), null.ok = TRUE)
 
@@ -54,7 +54,7 @@ createPrediction.default = function(object, data, target = NULL, predict.fun = N
   p = predict.fun(object, newdata = data)
   p = checkPrediction(y, p)
 
-  makeS3Obj("Prediction", y = y, pred = p)
+  makeS3Obj("ModelPrediction", y = y, pred = p)
 }
 
 # checkPrediction

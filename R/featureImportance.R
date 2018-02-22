@@ -29,7 +29,7 @@ featureImportance.WrappedModel = function(object, data, features = NULL, target 
   predict.fun = NULL, importance.fun = NULL, ...) {
 
   assertSubset(target, choices = getTaskTargetNames(getTaskDesc(object)), empty.ok = TRUE)
-  measures = assertMeasure(measures)
+  #measures = assertMeasure(measures)
   assertNull(predict.fun)
 
   # set defaults
@@ -49,7 +49,7 @@ featureImportance.ResampleResult = function(object, data, features = NULL, targe
   predict.fun = NULL, importance.fun = NULL, ...) {
 
   assertResampleResultData(object, data, target)
-  measures = assertMeasure(measures)
+  #measures = assertMeasure(measures)
 
   # set defaults
   if (is.null(target))
@@ -66,7 +66,7 @@ featureImportance.default = function(object, data, features = NULL, target = NUL
   n.feat.perm = 50, local = FALSE, measures, predict.fun = NULL, importance.fun = NULL, ...) {
 
   assertSubset(target, colnames(data), empty.ok = FALSE)
-  assertList(measures, "function", names = "strict")
+  #assertList(measures, "function", names = "strict")
   assertFunction(predict.fun, args = c("object", "newdata"), null.ok = TRUE)
 
   # set defaults
@@ -83,8 +83,8 @@ computeFeatureImportance = function(object, data, features, target = NULL,
   predict.fun = NULL, importance.fun = NULL) {
 
   # measure performance
-  unpermuted.perf = measurePerformance(object, data = data, target = target,
-    measures = measures, local = local, predict.fun = predict.fun)
+  unpermuted.pred = createModelPrediction(object, data = data, target = target, predict.fun = predict.fun)
+  unpermuted.perf = measurePerformance(unpermuted.pred, measures = measures, local = local)
 
   # build arg list
   args = list(unpermuted.perf = unpermuted.perf, object = object, data = data,
@@ -116,8 +116,8 @@ computeFeatureImportanceIteration = function(i, features, unpermuted.perf, objec
     # permute feature
     data.perm = permuteFeature(data, features = feature)
     # measure performance when feature is shuffled
-    permuted.perf = measurePerformance(object, data = data.perm, target = target,
-      measures = measures, local = local, predict.fun = predict.fun)
+    permuted.pred = createModelPrediction(object, data = data.perm, target = target, predict.fun = predict.fun)
+    permuted.perf = measurePerformance(permuted.pred, measures = measures, local = local)
     # Compare true and shuffled performance
     measureFeatureImportance(permuted.perf, unpermuted.perf, importance.fun = importance.fun)
   })

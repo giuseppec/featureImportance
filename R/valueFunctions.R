@@ -24,13 +24,14 @@ calculateValueFunctionPerformance = function(features, object, data, target = NU
   shuffle.features = setdiff(all.feats, features)
   # compute the value function
   ret = lapply(1:n.feat.perm, function(i) {
-    ret = measurePerformance(object, data = permuteFeature(data, features = shuffle.features),
-      target = target, measures = measures, predict.fun = predict.fun)
-    if (nrow(ret) != 1)
-      stopf("'ret' should be only one row.")
-    #ret = ifelse(minimize, -1, 1)*ret
-    ret = cbind(features = stri_paste(features, collapse = ","), ret)
-    ret
+    pred = createModelPrediction(object, data = permuteFeature(data, features = shuffle.features),
+      target = target, predict.fun = predict.fun)
+    perf = measurePerformance(pred, measures = measures)
+    if (nrow(perf) != 1)
+      stopf("'perf' should contain only one row.")
+    #perf = ifelse(minimize, -1, 1)*perf
+    perf = cbind(features = stri_paste(features, collapse = ","), perf)
+    perf
   })
   ret = rbindlist(ret)
 
