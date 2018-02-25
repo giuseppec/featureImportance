@@ -3,3 +3,4 @@
 ^attic
 ^man-roxygen
 .travis.yml
+README.Rmd

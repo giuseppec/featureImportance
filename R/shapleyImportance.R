@@ -10,18 +10,17 @@
 #' The feature(s) for which the shapley importance should be computed.
 #' @param bound.size [\code{numeric(1)}] \cr
 #' Bound on the permutation size to compute the Shapley value (see Cohen et al. (2007)).
-#' @param n.shapley.perm [\code{numeric(1)} | \code{"all.unique"}] \cr
-#' The number of permutations that should be used for the shapley value.
-#' Use \code{"all.unique"} to use all unique permutations.
-#' If n.shapley.perm > number of all unique permutatios then only all unique permutations are used.
+#' @param n.shapley.perm [\code{numeric(1)}] \cr
+#' The number of permutations that should be used for the shapley value (for computational reasons the maximum allowed value is 8192).
+#' If \code{n.shapley.perm} >= number of all unique permutatios, all unique permutations will be used.
+#' Use \code{n.shapley.perm = NULL} to use all unique permutations (or the maximum allowed value of 8192)
 #' Default is 120.
 #' @param value.function [\code{function}] \cr
 #' Function that defines the value function which is used to compute the shapley value.
 #' @export
-shapleyImportance = function(object, data, features, target, bound.size = NULL,
-  n.feat.perm = 50, n.shapley.perm = 120, measures,
-  predict.fun = NULL,
-  value.function = calculateValueFunctionImportance) {
+shapleyImportance = function(object, data, features, target, local = FALSE,
+  bound.size = NULL, n.feat.perm = 50, n.shapley.perm = 120, measures,
+  predict.fun = NULL, value.function = calculateValueFunctionImportance) {
   assertSubset(features, colnames(data))
   assertSubset(target, colnames(data))
   #measures = assertMeasure(measures)
@@ -47,7 +46,7 @@ shapleyImportance = function(object, data, features, target, bound.size = NULL,
   # })
 
   args = list(object = object, data = data, target = target,
-    n.feat.perm = n.feat.perm, measures = measures,
+    local = local, n.feat.perm = n.feat.perm, measures = measures,
     predict.fun = predict.fun)
   vf = parallelMap::parallelMap(value.function, features = values,
     more.args = args)

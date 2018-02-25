@@ -1,22 +1,27 @@
 #' @export
 calculateValueFunctionImportance = function(features, object, data, target = NULL,
-  n.feat.perm = 50, measures, predict.fun = NULL) {
+  n.feat.perm = 50, measures, predict.fun = NULL, local = FALSE) {
   assertCharacter(features)
   features = list(features) # compute importance for whole block
 
   imp = featureImportance(object = object, data = data, features = features,
-    target = target, measures = measures,
+    target = target, measures = measures, local = local,
     predict.fun = predict.fun, n.feat.perm = n.feat.perm)
 
+  mid = names(imp$measures)
+  imp = imp$importance
+
   # aggregate importance
-  imp.aggr = imp$importance[, lapply(.SD, mean), .SDcols = names(imp$measures), by = "features"]
+  if (is.null(imp$row.id))
+    imp.aggr = imp[, lapply(.SD, mean), .SDcols = mid, by = "features"] else
+      imp.aggr = imp[, lapply(.SD, mean), .SDcols = mid, by = c("features", "row.id")]
 
   return(imp.aggr)
 }
 
 #' @export
 calculateValueFunctionPerformance = function(features, object, data, target = NULL,
-  n.feat.perm = 50, measures, predict.fun = NULL) {
+  n.feat.perm = 50, measures, predict.fun = NULL, local = FALSE) {
   assertCharacter(features)
 
   all.feats = setdiff(colnames(data), target)
@@ -25,12 +30,11 @@ calculateValueFunctionPerformance = function(features, object, data, target = NU
   # compute the value function
   ret = lapply(1:n.feat.perm, function(i) {
     ret = measurePerformance(object, data = permuteFeature(data, features = shuffle.features),
-      target = target, measures = measures, predict.fun = predict.fun)
-    if (nrow(ret) != 1)
-      stopf("'ret' should be only one row.")
+      target = target, measures = measures, predict.fun = predict.fun, local = local)
+    #if (nrow(ret) != 1)
+    #  stopf("'ret' should be only one row.")
     #ret = ifelse(minimize, -1, 1)*ret
-    ret = cbind(features = stri_paste(features, collapse = ","), ret)
-    ret
+    cbind(features = stri_paste(features, collapse = ","), ret)
   })
   ret = rbindlist(ret)
 

@@ -4,16 +4,22 @@
 # @param perm list of permutations that are used to compute marginal contributions for
 
 # generate n.shapley.perm permutations for alle elements in features
-generatePermutations = function(features, n.shapley.perm = "all.unique", bound.size = NULL) {
+generatePermutations = function(features, n.shapley.perm = NULL, bound.size = NULL) {
   assertCharacter(features)
-  assert(checkSubset(n.shapley.perm, "all.unique"), checkIntegerish(n.shapley.perm, lower = 1))
+  perm.limit = 8192L
   n.feat = length(features)
+  if (is.null(n.shapley.perm))
+    n.shapley.perm = min(factorial(n.feat), perm.limit)
+  assertIntegerish(n.shapley.perm, lower = 1, upper = perm.limit)
+  assertIntegerish(bound.size, lower = 1, upper = n.feat, null.ok = TRUE)
   if (is.null(bound.size))
     bound.size = n.feat
   #if (is.null(bound.size))
   #  bound.size = ceiling(sqrt(length(features)))
 
-  if (n.shapley.perm == "all.unique" | (n.shapley.perm >= factorial(n.feat))) {
+  all.perm = n.shapley.perm >= factorial(n.feat)
+  no.bound = bound.size == n.feat
+  if (all.perm & no.bound) {
     messagef("All %s unique permutations for the %s features were generated!", factorial(n.feat), n.feat)
     p = e1071::permutations(n.feat)
     p = lapply(BBmisc::seq_row(p), function(i) features[p[i,]])

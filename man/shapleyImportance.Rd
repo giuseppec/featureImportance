@@ -31,10 +31,10 @@ Bound on the permutation size to compute the Shapley value (see Cohen et al. (20
 The number of permutations of the feature(s) used to compute the feature importance.
 The default is 50.}
 
-\item{n.shapley.perm}{[\code{numeric(1)} | \code{"all.unique"}] \cr
-The number of permutations that should be used for the shapley value.
-Use \code{"all.unique"} to use all unique permutations.
-If n.shapley.perm > number of all unique permutatios then only all unique permutations are used.
+\item{n.shapley.perm}{[\code{numeric(1)}] \cr
+The number of permutations that should be used for the shapley value (for computational reasons the maximum allowed value is 8192).
+If \code{n.shapley.perm} >= number of all unique permutatios, all unique permutations will be used.
+Use \code{n.shapley.perm = NULL} to use all unique permutations (or the maximum allowed value of 8192)
 Default is 120.}
 
 \item{measures}{[\code{\link[mlr]{Measure}} | list of \code{\link[mlr]{Measure}} | \code{function} | list of \code{function}] \cr
