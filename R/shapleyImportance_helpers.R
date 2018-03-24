@@ -78,9 +78,13 @@ getMarginalContributionValues = function(mc, vf) {
     with.f = stri_paste(m$with.f, collapse = ",")
     without.f = stri_paste(m$without.f, collapse = ",")
     # value function with feature f
-    v.with.f = vf[charmatch(with.f, f), ] #vf[f %in% with.f,]
+    v.with.f = vf[f %in% with.f,] #vf[charmatch(with.f, f), ]
+    if (!is.null(v.with.f$row.id))
+      v.with.f = setkeyv(v.with.f, "row.id")
     # value function without feature f
-    v.without.f = vf[charmatch(without.f, f), ] #vf[f %in% without.f,]
+    v.without.f = vf[f %in% without.f,] #vf[charmatch(without.f, f), ]
+    if (!is.null(v.without.f$row.id))
+      v.without.f = setkeyv(v.without.f, "row.id")
     list(
       with.f = with.f,
       without.f = without.f,
@@ -90,26 +94,49 @@ getMarginalContributionValues = function(mc, vf) {
   })
 
   # extract string
-  with.f = vcapply(mc.vals, function(x) x$with.f)
-  without.f = vcapply(mc.vals, function(x) x$without.f)
+  #with.f = vcapply(mc.vals, function(x) x$with.f)
+  #without.f = vcapply(mc.vals, function(x) x$without.f)
 
   # extract value functions
-  v.with.f = rbindlist(lapply(mc.vals, function(x) x$v.with.f))
-  v.without.f = rbindlist(lapply(mc.vals, function(x) x$v.without.f))
+  v.with.f = rbindlist(lapply(mc.vals,
+    function(x) x$v.with.f[, features.with.f := x$with.f]))
+  v.without.f = rbindlist(lapply(mc.vals,
+    function(x) x$v.without.f[, features.without.f := x$without.f]))
+
+  if (!is.null(v.with.f$row.id) & !is.null(v.without.f$row.id)) {
+    rid = "row.id"
+    mid = setdiff(colnames(vf), rid)
+    v.with.f = v.with.f[, lapply(.SD, mean), .SDcols = mid, by = c(rid, "features.with.f")]
+    #v.with.f = setkeyv(v.with.f, rid)
+    v.without.f = v.without.f[, lapply(.SD, mean), .SDcols = mid, by = c(rid, "features.without.f")]
+    #v.without.f = setkeyv(v.without.f, rid)
+  } else {
+    mid = colnames(vf)
+  }
 
   # compute marginal contribution value which is the difference of value functions:
-  ret = v.with.f - v.without.f
-  return(data.table(features.with.f = with.f, features.without.f = without.f, ret))
+  ret = v.with.f[, mid, with = FALSE] - v.without.f[, mid, with = FALSE]
+  ret = data.table(features.with.f = v.with.f$features.with.f,
+    features.without.f = v.without.f$features.without.f, ret)
+
+  if (!is.null(v.with.f$row.id) & !is.null(v.without.f$row.id))
+    ret$row.id = v.with.f$row.id
+
+  return(ret)
 }
 
-getShapleyImportance = function(mc.vals, measures) {
+getShapleyImportance = function(mc.vals) {
   #measures = assertMeasure(measures)
-  mid = setdiff(colnames(mc.vals), c("features.with.f", "features.without.f"))
-  mc.vals[, lapply(.SD, mean), .SDcols = mid]
+  mid = setdiff(colnames(mc.vals), c("feature", "features.with.f", "features.without.f", "row.id"))
+  if (is.null(mc.vals$row.id))
+    mc.vals[, lapply(.SD, mean), .SDcols = mid] else
+      mc.vals[, lapply(.SD, mean), .SDcols = mid, by = "row.id"]
 }
 
-getShapleyUncertainty = function(mc.vals, measures) {
+getShapleyUncertainty = function(mc.vals) {
   #measures = assertMeasure(measures)
-  mid = setdiff(colnames(mc.vals), c("features.with.f", "features.without.f"))
-  mc.vals[, lapply(.SD, var), .SDcols = mid]
+  mid = setdiff(colnames(mc.vals), c("feature", "features.with.f", "features.without.f", "row.id"))
+  if (is.null(mc.vals$row.id))
+    mc.vals[, lapply(.SD, var), .SDcols = mid] else
+      mc.vals[, lapply(.SD, var), .SDcols = mid, by = "row.id"]
 }

@@ -23,6 +23,8 @@ calculateValueFunctionImportance = function(features, object, data, target = NUL
 calculateValueFunctionPerformance = function(features, object, data, target = NULL,
   n.feat.perm = 50, measures, predict.fun = NULL, local = FALSE) {
   assertCharacter(features)
+  measures = assertMeasure(measures)
+  mid = names(measures)
 
   all.feats = setdiff(colnames(data), target)
   # shuffle all features except the ones for which we want to compute the value function
@@ -43,5 +45,10 @@ calculateValueFunctionPerformance = function(features, object, data, target = NU
   #  target = target, measures = measures, predict.fun = predict.fun)
   #return(empty.set - ret) # ret - empty.set when measure should be maximized
 
-  return(ret[, lapply(.SD, mean), by = "features"])
+  # aggregate importance
+  if (is.null(ret$row.id))
+    ret = ret[, lapply(.SD, mean), .SDcols = mid, by = "features"] else
+      ret = ret[, lapply(.SD, mean), .SDcols = mid, by = c("features", "row.id")]
+
+  return(ret)
 }

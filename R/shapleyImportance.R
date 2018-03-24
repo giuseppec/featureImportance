@@ -21,52 +21,47 @@
 shapleyImportance = function(object, data, features, target, local = FALSE,
   bound.size = NULL, n.feat.perm = 50, n.shapley.perm = 120, measures,
   predict.fun = NULL, value.function = calculateValueFunctionImportance) {
-  assertSubset(features, colnames(data))
-  assertSubset(target, colnames(data))
-  #measures = assertMeasure(measures)
-  all.feats = setdiff(colnames(data), target)
-  perm = generatePermutations(all.feats, n.shapley.perm = n.shapley.perm,
-    bound.size = bound.size)
+  cols = colnames(data)
+  assertSubset(features, cols)
+  assertSubset(target, cols)
+  measures = assertMeasure(measures)
+
+  # generate all permutations
+  all.feats = setdiff(cols, target)
+  perm = generatePermutations(all.feats, n.shapley.perm = n.shapley.perm, bound.size = bound.size)
 
   # generate all marginal contribution sets for features where we want to compute the shapley importance
   mc.list = lapply(features, function(x) generateMarginalContribution(x, perm))
   mc = unlist(mc.list, recursive = FALSE)
 
-  # get all unique sets
+  # get all unique sets for which the value function needs to be computed
   values = unique(unname(unlist(mc, recursive = FALSE)))
-
-  # compute value function for all unique value functions
-  # FIXME: allow parallelization
-  # vf = pbapply::pblapply(values, function(f) {
-  #   opb = pboptions(type = "none")
-  #   on.exit(pboptions(opb))
-  #   value.function(features = f, object = object, data = data, target = target,
-  #     n.feat.perm = n.feat.perm, measures = measures,
-  #     predict.fun = predict.fun)
-  # })
 
   args = list(object = object, data = data, target = target,
     local = local, n.feat.perm = n.feat.perm, measures = measures,
     predict.fun = predict.fun)
+
   vf = parallelMap::parallelMap(value.function, features = values,
     more.args = args)
 
   vf = rbindlist(vf)
-  vf$features = stri_paste_list(values, ",")
+  #vf = setNames(vf, stri_paste_list(values, ","))
+  #vf = rbindlist(vf, idcol = "features")
+  #vf$features = stri_paste_list(values, ",")
 
   # compute the marginal contribution values (difference of value functions)
-  mc.vf = lapply(seq_along(features), function(i) {
-    getMarginalContributionValues(mc.list[[i]], vf)
+  mc.vf = lapply(mc.list, function(x) {
+    getMarginalContributionValues(x, vf)
   })
 
   # get shapley importance (basically the mean of the mc.vf values)
   shapley.value = lapply(mc.vf, function(mc) {
-    getShapleyImportance(mc, measures = measures)
+    getShapleyImportance(mc)
   })
 
   # get shapley value uncertainty
   shapley.uncertainty = lapply(mc.vf, function(mc) {
-    getShapleyUncertainty(mc, measures = measures)
+    getShapleyUncertainty(mc)
   })
 
   makeS3Obj("ShapleyImportance",
