@@ -87,7 +87,7 @@ measureFeatureImportance = function(permuted.perf, unpermuted.perf, importance.f
 
   if (is.null(importance.fun)) {
     importance.fun = function(permuted, unpermuted)
-      (unpermuted - permuted)
+      (permuted - unpermuted)
   }
 
   fi = lapply(mid, function(i)
