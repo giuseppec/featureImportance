@@ -11,10 +11,10 @@ pimp(learner, task, resampling, measures, features = NULL, n.feat.perm = 1,
 \item{learner}{[\code{\link[mlr]{Learner}}] \cr
 The learner.}
 
-\item{task}{[\code{\link{Task}}]\cr
+\item{task}{(\link{Task})\cr
 The task.}
 
-\item{resampling}{[\code{\link{ResampleDesc}} or \code{\link{ResampleInstance}}]\cr
+\item{resampling}{(\link{ResampleDesc} or \link{ResampleInstance})\cr
 Resampling strategy.
 If a description is passed, it is instantiated automatically.}
 
