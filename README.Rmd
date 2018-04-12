@@ -1,0 +1,62 @@
+---
+output: github_document
+---
+
+```{r global_options, include=FALSE}
+library(knitr)
+opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+set.seed(123)
+```
+
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+[![CRAN Status Badge](http://www.r-pkg.org/badges/version/featureImportance)](http://cran.r-project.org/web/packages/featureImportance)
+[![CRAN Downloads](http://cranlogs.r-pkg.org/badges/featureImportance)](http://cran.rstudio.com/web/packages/featureImportance/index.html)
+[![Build Status](https://travis-ci.com/giuseppec/featureImportance.svg?token=P4o4Hs3rFaP4ygx5oTzm&branch=master)](https://travis-ci.com/giuseppec/featureImportance)
+[![codecov](https://codecov.io/gh/giuseppec/featureImportance/branch/master/graph/badge.svg?token=2w8ISxXGMc)](https://codecov.io/gh/giuseppec/featureImportance)
+
+# featureImportance: An R package to assess the importance of features for any machine learning model
+
+Add general info
+
+# Installation of the package
+
+Install the development version from GitHub (using `devtools`)
+
+```{r, results = 'hide', eval = FALSE}
+install.packages("devtools")
+devtools::install_github("giuseppec/featureImportance")
+```
+
+# Usecase
+
+```{r}
+library(mlr)
+library(mlbench)
+set.seed(2018)
+
+# Look at the data
+data(PimaIndiansDiabetes, package = "mlbench")
+str(PimaIndiansDiabetes)
+
+# Make classification task from data
+pid.task = makeClassifTask(data = PimaIndiansDiabetes, target = "diabetes")
+pid.task
+
+# Choose machine learning algorithm 
+lrn = makeLearner("classif.randomForest", ntree = 100)
+lrn
+
+# Create indices for train and test data
+n = getTaskSize(pid.task)
+train.ind = sample(n, size = 0.6*n)
+test.ind = setdiff(1:n, train.ind)
+
+# Fit model on train data
+mod = train(lrn, pid.task, subset = train.ind)
+
+featureImportance(mod, )
+```
+
+
+
+

@@ -1,8 +1,8 @@
 Package: featureImportance
-Title: Compute feature importance and variable importance measures for any model.
+Title: Model-agnostic Feature Importance Measures
 Version: 0.0.0.9000
 Authors@R: person("Giuseppe", "Casalicchio", email = "giuseppe.casalicchio@stat.uni-muenchen.de", role = c("aut", "cre"))
-Description: Compute several feature importance and variable importance measures for any model.
+Description: Computes several feature importance measures based on model performance.
 Depends: 
     R (>= 3.0.2),
     mlr (>= 2.11),    

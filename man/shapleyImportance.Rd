@@ -4,9 +4,9 @@
 \alias{shapleyImportance}
 \title{Shapley Importance}
 \usage{
-shapleyImportance(object, data, features, target, bound.size = NULL,
-  n.feat.perm = 50, n.shapley.perm = 120, measures, predict.fun = NULL,
-  value.function = calculateValueFunctionImportance)
+shapleyImportance(object, data, features, target, local = FALSE,
+  bound.size = NULL, n.feat.perm = 50, n.shapley.perm = 120, measures,
+  predict.fun = NULL, value.function = calculateValueFunctionImportance)
 }
 \arguments{
 \item{object}{[any] \cr
@@ -23,6 +23,11 @@ The feature(s) for which the shapley importance should be computed.}
 \item{target}{[\code{character(1)}] \cr
 Only needed if \code{object} is not of class \code{WrappedModel} or \code{ResampleResult}.
 Name of the target feature to be predicted.}
+
+\item{local}{[\code{logical(1)}] \cr
+Should the performance (or the feature importance) be computed observation-wise?
+Note that not all measures support this (e.g. one can not compute the AUC for one observation).
+The default is FALSE.}
 
 \item{bound.size}{[\code{numeric(1)}] \cr
 Bound on the permutation size to compute the Shapley value (see Cohen et al. (2007)).}

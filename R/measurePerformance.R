@@ -8,7 +8,7 @@
 #' @template arg_measures
 #' @template arg_local
 #' @template arg_predict.fun
-# @export
+#' @export
 measurePerformance = function(object, data, target = NULL,
   measures, local = FALSE, predict.fun = NULL) {
   assertDataFrame(data)
@@ -17,7 +17,7 @@ measurePerformance = function(object, data, target = NULL,
   UseMethod("measurePerformance")
 }
 
-# @export
+#' @export
 measurePerformance.ResampleResult = function(object, data, target = NULL,
   measures, local = FALSE, predict.fun = NULL) {
   assertResampleResultData(object, data, target)
@@ -47,7 +47,7 @@ measurePerformance.ResampleResult = function(object, data, target = NULL,
   return(perf)
 }
 
-# @export
+#' @export
 measurePerformance.WrappedModel = function(object, data, target = NULL,
   measures, local = FALSE, predict.fun = NULL) {
   measures = assertMeasure(measures)
