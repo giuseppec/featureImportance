@@ -54,7 +54,9 @@ test.ind = setdiff(1:n, train.ind)
 # Fit model on train data
 mod = train(lrn, pid.task, subset = train.ind)
 
-featureImportance(mod, )
+# Measure feature importance on test data
+test = getTaskData(pid.task, subset = train.ind)
+featureImportance(mod, data = test)
 ```
 
 
