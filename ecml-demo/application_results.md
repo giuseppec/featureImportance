@@ -1,15 +1,10 @@
----
-title: "Application Results"
-output: 
-  github_document
----
+Application Results
+================
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+Load Packages
+=============
 
-# Load Packages
-```{r}
+``` r
 # load packages
 library(data.table)
 library(ggplot2)
@@ -20,9 +15,10 @@ library(BBmisc)
 library(knitr)
 ```
 
-# Produce Table
+Produce Table
+=============
 
-```{r echo=TRUE, message=FALSE, warning=FALSE, results='asis'}
+``` r
 pfi = readRDS("application_importance_realdata.Rds")
 mid = "mse"
 
@@ -51,9 +47,16 @@ imp.ici = getImpTable(pfi, ici.ind)
 kable(rbind(imp, imp.pi, imp.ici))
 ```
 
-# Produce PI and ICI plots
+|  LSTAT|    RM|  NOX|  DIS|  CRIM|  PTRATIO|  AGE|  INDUS|  TAX|  RAD|    B|   ZN|  CHAS|
+|------:|-----:|----:|----:|-----:|--------:|----:|------:|----:|----:|----:|----:|-----:|
+|   32.0|  15.6|  3.9|  2.7|   2.6|      2.2|  1.2|    1.0|  1.0|  0.8|  0.8|  0.1|   0.1|
+|   10.4|  29.6|  1.5|  3.3|   0.8|      2.3|  0.8|    0.5|  1.2|  1.1|  0.6|  0.2|   0.2|
+|   35.3|  17.0|  4.3|  2.4|   2.5|      2.5|  1.1|    1.2|  0.8|  0.9|  0.8|  0.1|   0.1|
 
-```{r piplot, echo=TRUE, message=FALSE, warning=FALSE, fig.width=7, fig.height=5, fig.cap="PI and ICI plots for a random forest and the two most important features of the Boston housing data (LSTAT and RM). The horizontal lines in the PI plots represent the value of the global PFI (i.e. the integral of the PI curve). Marginal distribution histograms for features and partial importances are added in the PI and ICI plot margins, respectively. The ICI curve with the largest integral is highlighted in green and the curve with the smallest integral in red.", fig.pos="ht"}
+Produce PI and ICI plots
+========================
+
+``` r
 plotPartialImportance = function(pfi, feat, learner.id, mid,
   marginal = FALSE, individual = FALSE, rug = TRUE, hline = TRUE, 
   grid.points = TRUE, subset.observation.index = NULL, subset.replaced.index = NULL) {
@@ -126,9 +129,12 @@ pp[c(2,4)] = lapply(pp[c(2,4)], function(p)
 do.call(grid.arrange, pp[c(1,3,2,4)])
 ```
 
-# Produce Shapley Feature Importance Plots
+![PI and ICI plots for a random forest and the two most important features of the Boston housing data (LSTAT and RM). The horizontal lines in the PI plots represent the value of the global PFI (i.e. the integral of the PI curve). Marginal distribution histograms for features and partial importances are added in the PI and ICI plot margins, respectively. The ICI curve with the largest integral is highlighted in green and the curve with the smallest integral in red.](application_results_files/figure-markdown_github/piplot-1.png)
 
-```{r shapley, echo=TRUE, message=FALSE, warning=FALSE, fig.width=10, fig.height=6, fig.cap="Panel (a) shows the results of a single run, consisting of sampling test data and computing the importance on the previously fitted models. The first numbers on the left refer to the model performance (MSE) using all features. The other numbers are the SFIMP values which sum up to the total explainable performance. The percentages refer to the proportion of explained importance. Panel (b) shows the results of 500 repetitions of the experiment. The plots display the distribution of ratios of the importance values for $X_1$ and $X_2$ with respect to $X_3$ computed by SFIMP, by the difference-based PFI and by the ratio-based PFI.", results = 'hide', fig.pos="ht"}
+Produce Shapley Feature Importance Plots
+========================================
+
+``` r
 ### Plot Example
 res.ex = readRDS("application_shapley_simulation.Rds")
 # select one single run of the simulation with 500 repetitions to plot the example
@@ -188,3 +194,5 @@ pp = pp + scale_x_discrete(labels = new.names) +
   ggtitle("(b) Simulation with 500 repetitions")
 grid.arrange(plot.ex, pp, heights = c(1.5, 2.5))
 ```
+
+![Panel (a) shows the results of a single run, consisting of sampling test data and computing the importance on the previously fitted models. The first numbers on the left refer to the model performance (MSE) using all features. The other numbers are the SFIMP values which sum up to the total explainable performance. The percentages refer to the proportion of explained importance. Panel (b) shows the results of 500 repetitions of the experiment. The plots display the distribution of ratios of the importance values for *X*<sub>1</sub> and *X*<sub>2</sub> with respect to *X*<sub>3</sub> computed by SFIMP, by the difference-based PFI and by the ratio-based PFI.](application_results_files/figure-markdown_github/shapley-1.png)
