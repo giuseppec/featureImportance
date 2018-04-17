@@ -1,35 +1,31 @@
----
-output: github_document
----
 
+featureImportance
+=================
 
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) [![CRAN Status Badge](http://www.r-pkg.org/badges/version/featureImportance)](http://cran.r-project.org/web/packages/featureImportance) [![CRAN Downloads](http://cranlogs.r-pkg.org/badges/featureImportance)](http://cran.rstudio.com/web/packages/featureImportance/index.html) [![Build Status](https://travis-ci.com/giuseppec/featureImportance.svg?token=P4o4Hs3rFaP4ygx5oTzm&branch=master)](https://travis-ci.com/giuseppec/featureImportance) [![codecov](https://codecov.io/gh/giuseppec/featureImportance/branch/master/graph/badge.svg?token=2w8ISxXGMc)](https://codecov.io/gh/giuseppec/featureImportance)
 
-[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
-[![CRAN Status Badge](http://www.r-pkg.org/badges/version/featureImportance)](http://cran.r-project.org/web/packages/featureImportance)
-[![CRAN Downloads](http://cranlogs.r-pkg.org/badges/featureImportance)](http://cran.rstudio.com/web/packages/featureImportance/index.html)
-[![Build Status](https://travis-ci.com/giuseppec/featureImportance.svg?token=P4o4Hs3rFaP4ygx5oTzm&branch=master)](https://travis-ci.com/giuseppec/featureImportance)
-[![codecov](https://codecov.io/gh/giuseppec/featureImportance/branch/master/graph/badge.svg?token=2w8ISxXGMc)](https://codecov.io/gh/giuseppec/featureImportance)
+ECML Results
+============
 
-# featureImportance: An R package to assess the importance of features for any machine learning model
+A description of the results from the application section can be found here: <https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_results.md>
 
-Add general info
-
-# Installation of the package
+Installation of the package
+===========================
 
 Install the development version from GitHub (using `devtools`)
 
-
-```r
+``` r
 install.packages("devtools")
 devtools::install_github("giuseppec/featureImportance")
 ```
 
-# Usecase
+Usecase
+=======
 
-
-```r
+``` r
 library(mlr)
 library(mlbench)
+library(featureImportance)
 set.seed(2018)
 
 # Look at the data
@@ -37,60 +33,54 @@ data(PimaIndiansDiabetes, package = "mlbench")
 str(PimaIndiansDiabetes)
 ```
 
-```
-## 'data.frame':	768 obs. of  9 variables:
-##  $ pregnant: num  6 1 8 1 0 5 3 10 2 8 ...
-##  $ glucose : num  148 85 183 89 137 116 78 115 197 125 ...
-##  $ pressure: num  72 66 64 66 40 74 50 0 70 96 ...
-##  $ triceps : num  35 29 0 23 35 0 32 0 45 0 ...
-##  $ insulin : num  0 0 0 94 168 0 88 0 543 0 ...
-##  $ mass    : num  33.6 26.6 23.3 28.1 43.1 25.6 31 35.3 30.5 0 ...
-##  $ pedigree: num  0.627 0.351 0.672 0.167 2.288 ...
-##  $ age     : num  50 31 32 21 33 30 26 29 53 54 ...
-##  $ diabetes: Factor w/ 2 levels "neg","pos": 2 1 2 1 2 1 2 1 2 2 ...
-```
+    ## 'data.frame':    768 obs. of  9 variables:
+    ##  $ pregnant: num  6 1 8 1 0 5 3 10 2 8 ...
+    ##  $ glucose : num  148 85 183 89 137 116 78 115 197 125 ...
+    ##  $ pressure: num  72 66 64 66 40 74 50 0 70 96 ...
+    ##  $ triceps : num  35 29 0 23 35 0 32 0 45 0 ...
+    ##  $ insulin : num  0 0 0 94 168 0 88 0 543 0 ...
+    ##  $ mass    : num  33.6 26.6 23.3 28.1 43.1 25.6 31 35.3 30.5 0 ...
+    ##  $ pedigree: num  0.627 0.351 0.672 0.167 2.288 ...
+    ##  $ age     : num  50 31 32 21 33 30 26 29 53 54 ...
+    ##  $ diabetes: Factor w/ 2 levels "neg","pos": 2 1 2 1 2 1 2 1 2 2 ...
 
-```r
+``` r
 # Make classification task from data
 pid.task = makeClassifTask(data = PimaIndiansDiabetes, target = "diabetes")
 pid.task
 ```
 
-```
-## Supervised task: PimaIndiansDiabetes
-## Type: classif
-## Target: diabetes
-## Observations: 768
-## Features:
-##    numerics     factors     ordered functionals 
-##           8           0           0           0 
-## Missings: FALSE
-## Has weights: FALSE
-## Has blocking: FALSE
-## Has coordinates: FALSE
-## Classes: 2
-## neg pos 
-## 500 268 
-## Positive class: neg
-```
+    ## Supervised task: PimaIndiansDiabetes
+    ## Type: classif
+    ## Target: diabetes
+    ## Observations: 768
+    ## Features:
+    ##    numerics     factors     ordered functionals 
+    ##           8           0           0           0 
+    ## Missings: FALSE
+    ## Has weights: FALSE
+    ## Has blocking: FALSE
+    ## Has coordinates: FALSE
+    ## Classes: 2
+    ## neg pos 
+    ## 500 268 
+    ## Positive class: neg
 
-```r
+``` r
 # Choose machine learning algorithm 
 lrn = makeLearner("classif.randomForest", ntree = 100)
 lrn
 ```
 
-```
-## Learner classif.randomForest from package randomForest
-## Type: classif
-## Name: Random Forest; Short name: rf
-## Class: classif.randomForest
-## Properties: twoclass,multiclass,numerics,factors,ordered,prob,class.weights,oobpreds,featimp
-## Predict-Type: response
-## Hyperparameters: ntree=100
-```
+    ## Learner classif.randomForest from package randomForest
+    ## Type: classif
+    ## Name: Random Forest; Short name: rf
+    ## Class: classif.randomForest
+    ## Properties: twoclass,multiclass,numerics,factors,ordered,prob,class.weights,oobpreds,featimp
+    ## Predict-Type: response
+    ## Hyperparameters: ntree=100
 
-```r
+``` r
 # Create indices for train and test data
 n = getTaskSize(pid.task)
 train.ind = sample(n, size = 0.6*n)
@@ -104,20 +94,34 @@ test = getTaskData(pid.task, subset = train.ind)
 featureImportance(mod, data = test)
 ```
 
-```
-## Object of class 'featureImportance'
-## Aggregated importance:
-##    features       mmce
-## 1: pregnant 0.03182609
-## 2:  glucose 0.19434783
-## 3: pressure 0.02930435
-## 4:  triceps 0.01752174
-## 5:  insulin 0.02221739
-## 6:     mass 0.10169565
-## 7: pedigree 0.06773913
-## 8:      age 0.06682609
-```
-
-
-
-
+    ## $importance
+    ##      n.feat.perm features       mmce
+    ##   1:           1 pregnant 0.02608696
+    ##   2:           1  glucose 0.21086957
+    ##   3:           1 pressure 0.03260870
+    ##   4:           1  triceps 0.02173913
+    ##   5:           1  insulin 0.01956522
+    ##  ---                                
+    ## 396:          50  triceps 0.01521739
+    ## 397:          50  insulin 0.01956522
+    ## 398:          50     mass 0.10434783
+    ## 399:          50 pedigree 0.06956522
+    ## 400:          50      age 0.06521739
+    ## 
+    ## $resample
+    ## NULL
+    ## 
+    ## $measures
+    ## $measures$mmce
+    ## Name: Mean misclassification error
+    ## Performance measure: mmce
+    ## Properties: classif,classif.multi,req.pred,req.truth
+    ## Minimize: TRUE
+    ## Best: 0; Worst: 1
+    ## Aggregated by: test.mean
+    ## Arguments: 
+    ## Note: Defined as: mean(response != truth)
+    ## 
+    ## 
+    ## attr(,"class")
+    ## [1] "featureImportance"
