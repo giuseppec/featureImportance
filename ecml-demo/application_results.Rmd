@@ -1,5 +1,5 @@
 ---
-title: "PI and ICI Plots"
+title: "Application Results"
 output: 
   html_document: 
     fig_caption: yes
@@ -9,6 +9,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Load Packages
 ```{r}
 # load packages
 library(data.table)
@@ -17,13 +18,16 @@ library(gridExtra)
 library(ggExtra)
 library(xtable)
 library(BBmisc)
+library(knitr)
 ```
+
+# Produce Table
 
 ```{r echo=TRUE, message=FALSE, warning=FALSE, results='asis'}
 pfi = readRDS("application_importance_realdata.Rds")
 mid = "mse"
 
-# write table function
+# function for recomputing feature importance after removing observations indexed by subset.ind
 getImpTable = function(pfi, subset.ind = NULL, learner = "regr.randomForest") {
   if (!is.null(subset.ind))
     pfi = subset(pfi, row.id %nin% subset.ind & replace.id %nin% subset.ind)
@@ -41,18 +45,14 @@ ici = subset(pfi, learner == "regr.randomForest" & features == "LSTAT")
 ici.integral = ici[, lapply(.SD, mean, na.rm = TRUE), .SDcols = mid, by = "row.id"]
 ici.ind = which(ici.integral[[mid]] <= 0)
 
-# produce tables
+# produce table
 imp = getImpTable(pfi)
 imp.pi = getImpTable(pfi, pi.ind)
 imp.ici = getImpTable(pfi, ici.ind)
-tab = rbind(imp, imp.pi, imp.ici)
-row.names(tab) = c("(1)", "(2)", "(3)")
-xtab = xtable(tab, digits = 1)
-align(xtab) = c(rep("c|", length(align(xtab)) - 1), "c")
-caption(xtab) = "PFI values calculated for a random forest trained on the Boston housing training set and using the MSE on the test data. The PFI values in row (1) are based on all observations from the test set, in row (2) on a subset where $\\text{LSTAT} < 10$ and in row (3) after removing observations having a negative ICI integral."
-label(xtab) = "tab:imp"
-print(xtab, include.rownames = TRUE, caption.placement = "top", type = "html")
+kable(rbind(imp, imp.pi, imp.ici))
 ```
+
+# Produce PI and ICI plots
 
 ```{r piplot, echo=TRUE, message=FALSE, warning=FALSE, fig.width=7, fig.height=5, fig.cap="PI and ICI plots for a random forest and the two most important features of the Boston housing data (LSTAT and RM). The horizontal lines in the PI plots represent the value of the global PFI (i.e. the integral of the PI curve). Marginal distribution histograms for features and partial importances are added in the PI and ICI plot margins, respectively. The ICI curve with the largest integral is highlighted in green and the curve with the smallest integral in red.", fig.pos="ht"}
 plotPartialImportance = function(pfi, feat, learner.id, mid,
@@ -127,3 +127,65 @@ pp[c(2,4)] = lapply(pp[c(2,4)], function(p)
 do.call(grid.arrange, pp[c(1,3,2,4)])
 ```
 
+# Produce Shapley Feature Importance Plots
+
+```{r shapley, echo=TRUE, message=FALSE, warning=FALSE, fig.width=10, fig.height=6, fig.cap="Panel (a) shows the results of a single run, consisting of sampling test data and computing the importance on the previously fitted models. The first numbers on the left refer to the model performance (MSE) using all features. The other numbers are the SFIMP values which sum up to the total explainable performance. The percentages refer to the proportion of explained importance. Panel (b) shows the results of 500 repetitions of the experiment. The plots display the distribution of ratios of the importance values for $X_1$ and $X_2$ with respect to $X_3$ computed by SFIMP, by the difference-based PFI and by the ratio-based PFI.", results = 'hide', fig.pos="ht"}
+### Plot Example
+res.ex = readRDS("application_shapley_simulation.Rds")
+# select one single run of the simulation with 500 repetitions to plot the example
+res.ex = subset(res.ex, repl == 2 & method %in% c("shapley", "geP"), select = c("learner", "feature", "mse", "method"))
+# specify colour and legend text
+feat.order = c("V3", "V2", "V1", "geP")
+col = c(gray.colors(3, start = 0.5, end = .9), hcl(h = 195, l = 65, c = 100))
+col = setNames(col, feat.order)
+legend.lab = c(
+  "V1" = bquote(phi[1]),
+  "V2" = bquote(phi[2]),
+  "V3" = bquote(phi[3]),
+  "geP" = bquote(widehat(GE)[P])
+)
+# change sign
+res.ex[, mse := ifelse(method != "geP", -mse, mse)]
+# reorder features for plotting
+res.ex$feature = factor(res.ex$feature, levels = feat.order)
+# shorten string for learner
+res.ex$learner = factor(gsub("regr.", "", res.ex$learner))
+# add column containing proportion of explained importance
+res.ex[, perc := ifelse(feature == "geP", NA, mse[feature != "geP"]/sum(mse[feature != "geP"])*100), by = c("learner")]
+# add column containing drop in MSE + proportion of explained importance
+res.ex[, label := ifelse(feature == "geP", round(mse, 2), paste0(round(mse, 2), " (", round(perc, 0), "%)"))]
+
+plot.ex = ggplot(res.ex, aes(x = learner, y = mse, fill = feature))
+plot.ex = plot.ex + geom_bar(stat = "identity", colour = "white", pos = "stack") + coord_flip()
+plot.ex = plot.ex + geom_text(aes(label = label), position = position_stack(vjust = 0.5), size = 2.5)
+plot.ex = plot.ex +
+  ylab("performance (MSE)") +
+  xlab("") +
+  ggtitle("(a) Comparing the model performance and SFIMP values across different models") +
+  scale_fill_manual(values = col, name = " performance \n explained by", labels = legend.lab) +
+  theme_minimal()
+
+
+
+### Plot Simulation Results
+res.cleanup = readRDS("application_shapley_simulation.Rds")
+res.cleanup = subset(res.cleanup, method %in% c("pfi.diff", "pfi.ratio", "shapley"))
+# compute percentages for 3 features
+res.cleanup[, ratio := mse/mse[feature == "V3"], by = c("method", "learner", "repl")]
+res.cleanup = subset(res.cleanup, feature != "V3")
+
+lab.lrn = function(lrn) gsub("regr.", "", lrn)
+new.names = setNames(expression(X[1] / X[3], X[2] / X[3]), c("V1", "V2"))
+
+pp = ggplot(data = res.cleanup, aes(x = feature, y = ratio))
+pp = pp + geom_boxplot(aes(fill = method), lwd = 0.25, outlier.size = 0.75)
+pp = pp + facet_grid(. ~ learner, scales = "free", labeller = labeller(learner = lab.lrn))
+pp = pp +
+  scale_fill_discrete(name = "method",  labels = c("PFI (Diff.)", "PFI (Ratio)", "SFIMP"))  +
+  scale_fill_grey(start = 0.4, end = .95) +
+  theme_minimal()
+pp = pp + scale_x_discrete(labels = new.names) +
+  ylab("Value of the ratio") + xlab("Features involved to compute the ratio") +
+  ggtitle("(b) Simulation with 500 repetitions")
+grid.arrange(plot.ex, pp, heights = c(1.5, 2.5))
+```
