@@ -3,12 +3,12 @@ library(batchtools)
 library(featureImportance)
 
 # create registry
-path = "paper/application/application_pfi_bh"
+path = "application_importance_realdata"
 unlink(path, recursive = TRUE)
 reg = makeExperimentRegistry(
   file.dir = path,
-  packages = c("mlr", "OpenML", "BBmisc", "parallelMap", "featureImportance"),
-  source = "paper/application/helper_functions.R",
+  packages = c("mlr", "OpenML", "BBmisc", "featureImportance"),
+  source = "helper_functions.R",
   seed = 123)
 reg$cluster.functions = makeClusterFunctionsSocket(30)
 
@@ -87,4 +87,11 @@ pfi = rbindlist(reduceResultsList(findDone(), fun = function(x) {
   x$pfi
 }))
 
-saveRDS(pfi, file = "paper/application/application_pfi_bh.Rds")
+# subset results
+pfi = subset(pfi,
+  subset = learner == "regr.randomForest",
+  select = -c(mae, medae, rmse, medse, pred))
+pfi[is.na(pfi)] = 0
+pfi$feature.value = as.numeric(as.character(pfi$feature.value))
+
+saveRDS(pfi, file = paste0(path, ".Rds"))
