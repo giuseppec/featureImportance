@@ -1,11 +1,16 @@
 Application Results
 ================
 
+Introduction
+============
+
+In this short tutorial, we provide the code that reproduces the results of the application section of our article entitled "Visualizing the Feature Importance for Black Box Models". We used [`batchtools`](https://github.com/mllg/batchtools) to run our experiments. The files [`application_shapley_simulation.R`](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_shapley_simulation.R) and [`application_importance_realdata.R`](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_importance_realdata.R) contain the `batchtools` code for the expermients and can be found in this [directory](https://github.com/giuseppec/featureImportance/tree/master/ecml-demo). The directory also includes the results of both files in an `.Rds` file which is used in the code below to produce the figures and tables.
+
 Load Packages
 =============
 
 ``` r
-# load packages
+# load required packages
 library(data.table)
 library(ggplot2)
 library(gridExtra)
@@ -22,20 +27,20 @@ Produce Table
 pfi = readRDS("application_importance_realdata.Rds")
 mid = "mse"
 
-# function for recomputing feature importance after removing observations indexed by subset.ind
-getImpTable = function(pfi, subset.ind = NULL, learner = "regr.randomForest") {
+# function for recomputing the feature importance after removing observations indexed by subset.ind
+getImpTable = function(pfi, subset.ind = NULL, learner.id = "regr.randomForest", mid = "mse") {
   if (!is.null(subset.ind))
     pfi = subset(pfi, row.id %nin% subset.ind & replace.id %nin% subset.ind)
-  imp = pfi[, lapply(.SD, mean, na.rm = TRUE), .SDcols = c("mse"),
-    by = c("features", "learner")]
-  imp = split(imp, imp$learner)[[learner]]
-  imp$mse = round(imp$mse, 1)
-  imp = sortByCol(imp[, -"learner"], "mse", asc = FALSE)
-  setColNames(as.data.frame(rbind(imp$mse)), imp$features)
+  imp = pfi[, lapply(.SD, mean, na.rm = TRUE), .SDcols = mid, by = c("features", "learner")]
+  imp = split(imp, imp$learner)[[learner.id]]
+  imp[[mid]] = round(imp[[mid]], 1)
+  imp = sortByCol(imp[, -"learner"], mid, asc = FALSE)
+  setColNames(as.data.frame(rbind(imp[[mid]])), imp$features)
 }
 
 # get index for LSTAT > 10 in order to remove those observations
 pi.ind = unique(pfi$replace.id[pfi$features == "LSTAT" & pfi$feature.value > 10])
+# compute integral of each ICI curve and select observations with negative ICI integral
 ici = subset(pfi, learner == "regr.randomForest" & features == "LSTAT")
 ici.integral = ici[, lapply(.SD, mean, na.rm = TRUE), .SDcols = mid, by = "row.id"]
 ici.ind = which(ici.integral[[mid]] <= 0)
@@ -57,11 +62,10 @@ Produce PI and ICI plots
 ========================
 
 ``` r
-plotPartialImportance = function(pfi, feat, learner.id, mid,
-  marginal = FALSE, individual = FALSE, rug = TRUE, hline = TRUE, 
+# function to plot PI and ICI curves
+plotPartialImportance = function(pfi, feat, learner.id, mid, individual = FALSE, rug = TRUE, hline = TRUE, 
   grid.points = TRUE, subset.observation.index = NULL, subset.replaced.index = NULL) {
   d = copy(subset(pfi, learner == learner.id & features == feat))
-  d$feature.value = as.numeric(as.character(d$feature.value))
   if (!is.null(subset.observation.index))
     d = subset(d, row.id %in% subset.observation.index)
   if (!is.null(subset.replaced.index))
@@ -82,9 +86,7 @@ plotPartialImportance = function(pfi, feat, learner.id, mid,
     pp = pp + geom_rug()
   if (hline)
     pp = pp + geom_hline(yintercept = mean(pi[[mid]]))
-  if (marginal)
-    ggMarginal(pp, type = "histogram", fill = "transparent") else
-      pp
+  return(pp)
 }
 
 learner.id = "regr.randomForest"
@@ -94,7 +96,7 @@ features = c("LSTAT", "RM")
 pp = lapply(features, function(feat) {
   ici = subset(pfi, learner == learner.id & features == feat)
   ici.integral = ici[, lapply(.SD, mean, na.rm = TRUE), .SDcols = mid, by = "row.id"]
-  ind = c(which.min(ici.integral[[mid]]), which.max(ici.integral[[mid]])) # unlist(ind[[feat]])
+  ind = c(which.min(ici.integral[[mid]]), which.max(ici.integral[[mid]]))
   ici.obs = subset(ici, row.id %in% ici.integral$row.id[ind])
 
   # PI plots
@@ -108,24 +110,18 @@ pp = lapply(features, function(feat) {
   ici.plot = plotPartialImportance(pfi, feat, learner.id, mid,
     individual = TRUE, grid.points = FALSE, rug = FALSE, hline = FALSE)
   ici.plot = ici.plot +
-    geom_line(data = ici.obs, aes_string(x = "feature.value", y = mid,
-      color = "factor(row.id)",
-      group = "row.id")) +
+    geom_line(data = ici.obs, aes_string(x = "feature.value", y = mid, color = "factor(row.id)", group = "row.id")) +
     labs(title = "ICI plot", y = bquote(Delta~L ~ "based on" ~ .(toupper(mid)))) +
     xlab(feat) +
     theme(legend.position = "none", title = element_text(size = 8), axis.title = element_text(size = 8))
   
   list(
-    pi.plot,
-    ici.plot
+    ggMarginal(pi.plot, type = "histogram", fill = "transparent"),
+    ggMarginal(ici.plot, type = "histogram", fill = "transparent", margins = "y")
   )
 })
 pp = unlist(pp, recursive = FALSE)
 
-pp[c(1,3)] = lapply(pp[c(1,3)], function(p)
-  ggMarginal(p, type = "histogram", fill = "transparent"))
-pp[c(2,4)] = lapply(pp[c(2,4)], function(p)
-  ggMarginal(p, type = "histogram", fill = "transparent", margins = "y"))
 do.call(grid.arrange, pp[c(1,3,2,4)])
 ```
 
@@ -174,10 +170,9 @@ plot.ex = plot.ex +
 
 ### Plot Simulation Results
 res.cleanup = readRDS("application_shapley_simulation.Rds")
-res.cleanup = subset(res.cleanup, method %in% c("pfi.diff", "pfi.ratio", "shapley"))
-# compute percentages for 3 features
+# compute ratio of the importance values w.r.t feature "V3"
 res.cleanup[, ratio := mse/mse[feature == "V3"], by = c("method", "learner", "repl")]
-res.cleanup = subset(res.cleanup, feature != "V3")
+res.cleanup = subset(res.cleanup, method %in% c("pfi.diff", "pfi.ratio", "shapley") & feature != "V3")
 
 lab.lrn = function(lrn) gsub("regr.", "", lrn)
 new.names = setNames(expression(X[1] / X[3], X[2] / X[3]), c("V1", "V2"))

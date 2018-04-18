@@ -8,6 +8,10 @@ opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 set.seed(123)
 ```
 
+# Reproducible results of our article entitled "Visualizing the Feature Importance for Black Box Models"
+
+A description of the results from the application section of our article entitled "Visualizing the Feature Importance for Black Box Models" can be found [here](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_results.md).
+
 # featureImportance
 
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
@@ -15,11 +19,6 @@ set.seed(123)
 [![CRAN Downloads](http://cranlogs.r-pkg.org/badges/featureImportance)](http://cran.rstudio.com/web/packages/featureImportance/index.html)
 [![Build Status](https://travis-ci.com/giuseppec/featureImportance.svg?token=P4o4Hs3rFaP4ygx5oTzm&branch=master)](https://travis-ci.com/giuseppec/featureImportance)
 [![codecov](https://codecov.io/gh/giuseppec/featureImportance/branch/master/graph/badge.svg?token=2w8ISxXGMc)](https://codecov.io/gh/giuseppec/featureImportance)
-
-# ECML Results
-
-A description of the results from the application section can be found here: 
-https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_results.md
 
 # Installation of the package
 
@@ -30,7 +29,7 @@ install.packages("devtools")
 devtools::install_github("giuseppec/featureImportance")
 ```
 
-# Usecase
+# Simple Usecase
 
 ```{r}
 library(mlr)
