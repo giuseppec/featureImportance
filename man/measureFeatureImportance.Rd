@@ -13,7 +13,10 @@ measureFeatureImportance(permuted.perf, unpermuted.perf,
 
 \item{unpermuted.perf}{a vector of the true performance(s)}
 
-\item{measures}{the performance measures that have been used: if big values for the measure are better, the drop in performance is true - permuted (negative "drop" values are performance "gains")}
+\item{importance.fun}{[\code{function}] \cr
+Function with signature \code{function(permuted, unpermuted)} which defines how \code{permuted} and \code{unpermuted} are aggregated to a feature importance measure.
+The function takes the result of \code{\link{measurePerformance}} as input for \code{permuted} and \code{unpermuted}.
+The default \code{NULL} internally uses \code{unpermuted - permuted} which refers to the drop in performance if the measure is to be maximized (i.e., if higher values of the measure refer to better performance).}
 }
 \description{
 Measures the Feature Importance

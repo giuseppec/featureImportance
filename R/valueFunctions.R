@@ -1,3 +1,12 @@
+#' @title Value Functions
+#' @name valueFunction
+#' @rdname valueFunction
+#' @description You can write your own value function.
+#' @inheritParams shapleyImportance
+NULL
+
+#' @rdname valueFunction
+#' @format none
 #' @export
 calculateValueFunctionImportance = function(features, object, data, target = NULL,
   n.feat.perm = 50, measures, predict.fun = NULL, local = FALSE) {
@@ -19,6 +28,8 @@ calculateValueFunctionImportance = function(features, object, data, target = NUL
   return(imp.aggr)
 }
 
+#' @rdname valueFunction
+#' @format none
 #' @export
 calculateValueFunctionPerformance = function(features, object, data, target = NULL,
   n.feat.perm = 50, measures, predict.fun = NULL, local = FALSE) {

@@ -2,9 +2,10 @@
 #' Measures the drop in performance between permuted and unpermuted features w.r.t. a function.
 #' @param permuted.perf a vector of the performance(s) when a feature was shuffled
 #' @param unpermuted.perf a vector of the true performance(s)
-#' @param measures the performance measures that have been used: if big values for the measure are better, the drop in performance is true - permuted (negative "drop" values are performance "gains")
+#' @template arg_importance.fun
 #' @export
 measureFeatureImportance = function(permuted.perf, unpermuted.perf, importance.fun = NULL) {
+# @param measures the performance measures that have been used: if big values for the measure are better, the drop in performance is true - permuted (negative "drop" values are performance "gains")
   mid = setdiff(colnames(permuted.perf), c("row.id", "cv.iter"))
 
   if (is.null(importance.fun)) {
