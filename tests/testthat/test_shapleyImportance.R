@@ -1,5 +1,5 @@
-context("featureImportance with WrappedModel works")
-test_that("featureImportance with WrappedModel works", {
+context("shapleyImportance with WrappedModel works")
+test_that("shapleyImportance with WrappedModel works", {
   feat = features
 
   set.seed(1)

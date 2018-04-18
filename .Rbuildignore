@@ -7,3 +7,4 @@
 README.Rmd
 README.md
 .gitignore
+codecov.yml

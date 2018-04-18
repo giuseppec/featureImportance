@@ -4,7 +4,7 @@
 \alias{shapleyImportance}
 \title{Shapley Importance}
 \usage{
-shapleyImportance(object, data, features, target, local = FALSE,
+shapleyImportance(object, data, features, target = NULL, local = FALSE,
   bound.size = NULL, n.feat.perm = 50, n.shapley.perm = 120, measures,
   predict.fun = NULL, value.function = calculateValueFunctionImportance)
 }

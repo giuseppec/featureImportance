@@ -23,7 +23,7 @@ test_that("featureImportance with WrappedModel works", {
   imp = featureImportance(mod, data = d, features = feat, n.feat.perm = n.feat.perm, measures = measures, local = TRUE)
   imp = imp$importance
   nrow = length(feat)*n.feat.perm*nrow(d)
-  expect_output(print.featureImportance(imp), regexp = "row.id")
+  expect_output(print.featureImportance(imp), regexp = "Aggregated importance")
   expect_data_table(imp, nrows = nrow)
   expect_set_equal(colnames(imp), c("features", "n.feat.perm", "row.id", mid))
   expect_equal(imp$acc, -imp$mmce)
