@@ -18,10 +18,12 @@
 #' @param value.function [\code{function}] \cr
 #' Function that defines the value function which is used to compute the shapley value.
 #' @export
-shapleyImportance = function(object, data, features, target, local = FALSE,
+shapleyImportance = function(object, data, features, target = NULL, local = FALSE,
   bound.size = NULL, n.feat.perm = 50, n.shapley.perm = 120, measures,
   predict.fun = NULL, value.function = calculateValueFunctionImportance) {
   assertSubset(features, colnames(data))
+  if (is.null(target) & inherits(mod, "WrappedModel"))
+    target = getTaskTargetNames(getTaskDesc(mod))
   assertSubset(target, colnames(data))
   #measures = assertMeasure(measures)
   all.feats = setdiff(colnames(data), target)
@@ -61,12 +63,12 @@ shapleyImportance = function(object, data, features, target, local = FALSE,
 
   # get shapley importance (basically the mean of the mc.vf values)
   shapley.value = lapply(mc.vf, function(mc) {
-    getShapleyImportance(mc, measures = measures)
+    getShapleyImportance(mc)#, measures = measures)
   })
 
   # get shapley value uncertainty
   shapley.uncertainty = lapply(mc.vf, function(mc) {
-    getShapleyUncertainty(mc, measures = measures)
+    getShapleyUncertainty(mc)#, measures = measures)
   })
 
   makeS3Obj("ShapleyImportance",

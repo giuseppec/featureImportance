@@ -1,38 +1,17 @@
-context("shapleyImportance helper checks (glove game)")
-test_that("shapleyImportance helper checks (glove game)", {
-  features = c("1", "2", "3")
-  perm = generatePermutations(features)
-  n = factorial(length(features))
-  expect_list(perm, len = n)
-  expect_identical(perm, generatePermutations(features, n.shapley.perm = 100))
-  expect_true(all(generatePermutations(features, n.shapley.perm = 2) %in% perm))
+context("featureImportance with WrappedModel works")
+test_that("featureImportance with WrappedModel works", {
+  feat = features
 
-  # get all unique sets for "1"
-  mc = generateMarginalContribution("1", perm)
-  expect_list(mc, len = n)
-  for (i in seq_along(mc))
-    expect_named(mc[[i]], c("with.f", "without.f"))
+  set.seed(1)
+  imp = shapleyImportance(mod, data = d, features = feat, n.feat.perm = n.feat.perm, measures = measures, local = FALSE)
+  expect_output(print.ShapleyImportance(imp), "Shapley")
 
-  calculateValueFunction = function(features){
-    val = list(c("1", "3"), c("2", "3"), c("1", "2", "3"))
-    if (any(BBmisc::vlapply(val, function(x) all(x %in% features))))
-      return(1) else
-        return(0)
-  }
+  # check if using mod$learner.model yields the same importances
+  set.seed(1)
+  imp2 = shapleyImportance(mod$learner.model, data = d, target = target, features = feat, n.feat.perm = n.feat.perm,
+    measures = measures.fun, local = FALSE, predict.fun = predict.fun)
+  expect_identical(imp$shapley.value, imp2$shapley.value)
 
-  mc = lapply(features, function(x) generateMarginalContribution(x, perm))
-  values = unique(unname(unlist(unlist(mc, recursive = FALSE), recursive = FALSE)))
-  value.function = lapply(values, function(f) {
-    as.data.table(calculateValueFunction(f))
-  })
-  vf = rbindlist(value.function)
-  vf$features = stri_paste_list(values, ",")
-
-  # see here https://en.wikipedia.org/wiki/Shapley_value#Example
-  mc1 = generateMarginalContribution("1", perm)
-  mc2 = generateMarginalContribution("2", perm)
-  mc3 = generateMarginalContribution("3", perm)
-  expect_identical(mean(getMarginalContributionValues(mc1, vf)$V1), 1/6)
-  expect_identical(mean(getMarginalContributionValues(mc2, vf)$V1), 1/6)
-  expect_identical(mean(getMarginalContributionValues(mc3, vf)$V1), 4/6)
+  # FIXME: check if shapleyImportance local importance works
+  # imp = shapleyImportance(mod, data = d, features = feat, n.feat.perm = n.feat.perm, n.shapley.perm = 1, measures = measures, local = TRUE)
 })

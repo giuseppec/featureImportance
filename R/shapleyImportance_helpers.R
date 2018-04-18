@@ -102,13 +102,13 @@ getMarginalContributionValues = function(mc, vf) {
   return(data.table(features.with.f = with.f, features.without.f = without.f, ret))
 }
 
-getShapleyImportance = function(mc.vals, measures) {
+getShapleyImportance = function(mc.vals) {
   #measures = assertMeasure(measures)
   mid = setdiff(colnames(mc.vals), c("features.with.f", "features.without.f"))
   mc.vals[, lapply(.SD, mean), .SDcols = mid]
 }
 
-getShapleyUncertainty = function(mc.vals, measures) {
+getShapleyUncertainty = function(mc.vals) {
   #measures = assertMeasure(measures)
   mid = setdiff(colnames(mc.vals), c("features.with.f", "features.without.f"))
   mc.vals[, lapply(.SD, var), .SDcols = mid]
