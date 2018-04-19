@@ -22,8 +22,8 @@ shapleyImportance = function(object, data, features, target = NULL, local = FALS
   bound.size = NULL, n.feat.perm = 50, n.shapley.perm = 120, measures,
   predict.fun = NULL, value.function = calculateValueFunctionImportance) {
   assertSubset(features, colnames(data))
-  if (is.null(target) & inherits(mod, "WrappedModel"))
-    target = getTaskTargetNames(getTaskDesc(mod))
+  if (is.null(target) & inherits(object, "WrappedModel"))
+    target = getTaskTargetNames(getTaskDesc(object))
   assertSubset(target, colnames(data))
   #measures = assertMeasure(measures)
   all.feats = setdiff(colnames(data), target)
