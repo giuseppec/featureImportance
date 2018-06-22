@@ -18,6 +18,8 @@ library(ggExtra)
 library(xtable)
 library(BBmisc)
 library(knitr)
+library(mlr)
+source("helper_functions.R")
 ```
 
 Produce Table
@@ -26,17 +28,6 @@ Produce Table
 ``` r
 pfi = readRDS("application_importance_realdata.Rds")
 mid = "mse"
-
-# function for recomputing the feature importance after removing observations indexed by subset.ind
-getImpTable = function(pfi, subset.ind = NULL, learner.id = "regr.randomForest", mid = "mse") {
-  if (!is.null(subset.ind))
-    pfi = subset(pfi, row.id %nin% subset.ind & replace.id %nin% subset.ind)
-  imp = pfi[, lapply(.SD, mean, na.rm = TRUE), .SDcols = mid, by = c("features", "learner")]
-  imp = split(imp, imp$learner)[[learner.id]]
-  imp[[mid]] = round(imp[[mid]], 1)
-  imp = sortByCol(imp[, -"learner"], mid, asc = FALSE)
-  setColNames(as.data.frame(rbind(imp[[mid]])), imp$features)
-}
 
 # get index for LSTAT > 10 in order to remove those observations
 pi.ind = unique(pfi$replace.id[pfi$features == "LSTAT" & pfi$feature.value > 10])
@@ -62,33 +53,6 @@ Produce PI and ICI plots
 ========================
 
 ``` r
-# function to plot PI and ICI curves
-plotPartialImportance = function(pfi, feat, learner.id, mid, individual = FALSE, rug = TRUE, hline = TRUE, 
-  grid.points = TRUE, subset.observation.index = NULL, subset.replaced.index = NULL) {
-  d = copy(subset(pfi, learner == learner.id & features == feat))
-  if (!is.null(subset.observation.index))
-    d = subset(d, row.id %in% subset.observation.index)
-  if (!is.null(subset.replaced.index))
-    d = subset(d, replace.id %in% subset.replaced.index)
-
-  pi = d[, lapply(.SD, mean, na.rm = TRUE),
-    .SDcols = c(mid), by = c("replace.id", "features", "learner", "feature.value")]
-
-  pp = ggplot(data = as.data.frame(pi), aes_string(x = "feature.value", y = mid))
-  if (grid.points)
-    pp = pp + geom_point()
-  if (individual) {
-    pp = pp + geom_point(shape = NA) + geom_line(data = as.data.frame(na.omit(d)),
-      aes_string(x = "feature.value", y = mid, group = "row.id"), color = "gray")
-  }
-  pp = pp + geom_line(data = as.data.frame(pi), aes_string(x = "feature.value", y = mid))
-  if (rug)
-    pp = pp + geom_rug()
-  if (hline)
-    pp = pp + geom_hline(yintercept = mean(pi[[mid]]))
-  return(pp)
-}
-
 learner.id = "regr.randomForest"
 mid = "mse"
 features = c("LSTAT", "RM")

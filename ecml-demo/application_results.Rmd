@@ -16,7 +16,7 @@ The files [`application_shapley_simulation.R`](https://github.com/giuseppec/feat
 The directory also includes the results of both files in an `.Rds` file which is used in the code below to produce the figures and tables.
 
 # Load Packages
-```{r}
+```{r, warning=FALSE, message=FALSE}
 # load required packages
 library(data.table)
 library(ggplot2)
@@ -25,6 +25,7 @@ library(ggExtra)
 library(xtable)
 library(BBmisc)
 library(knitr)
+library(mlr)
 source("helper_functions.R")
 ```
 
