@@ -51,7 +51,7 @@ kable(rbind(imp, imp.pi, imp.ici))
 
 # Produce PI and ICI plots
 
-```{r piplot, echo=TRUE, message=FALSE, warning=FALSE, fig.width=7, fig.height=5, fig.cap="PI and ICI plots for a random forest and the two most important features of the Boston housing data (LSTAT and RM). The horizontal lines in the PI plots represent the value of the global PFI (i.e. the integral of the PI curve). Marginal distribution histograms for features and partial importances are added in the PI and ICI plot margins, respectively. The ICI curve with the largest integral is highlighted in green and the curve with the smallest integral in red.", fig.pos="ht"}
+```{r piplot, echo=TRUE, message=FALSE, warning=FALSE, fig.width=7, fig.height=5, fig.cap="PI and ICI plots for a random forest and the two most important features of the Boston housing data (LSTAT and RM). The horizontal lines in the PI plots represent the value of the global PFI (i.e. the integral of the PI curve). Marginal distribution histograms for features are added to the PI and ICI plot margins. The ICI curve with the largest integral is highlighted in green and the curve with the smallest integral in red.", fig.pos="ht"}
 learner.id = "regr.randomForest"
 mid = "mse"
 features = c("LSTAT", "RM")
@@ -62,14 +62,14 @@ pp = lapply(features, function(feat) {
   ind = c(which.min(ici.integral[[mid]]), which.max(ici.integral[[mid]]))
   ici.obs = subset(ici, row.id %in% ici.integral$row.id[ind])
 
-  # PI plots
+  # PI plot
   pi.plot = plotPartialImportance(pfi, feat, learner.id, mid, rug = FALSE)
   pi.plot = pi.plot +
       labs(title = "PI plot", y = bquote(Delta~L ~ "based on" ~ .(toupper(mid)))) +
       xlab(feat) +
       theme(legend.position = "none", title = element_text(size = 8), axis.title = element_text(size = 8))
   
-  # ICI plots
+  # ICI plot
   ici.plot = plotPartialImportance(pfi, feat, learner.id, mid,
     individual = TRUE, grid.points = FALSE, rug = FALSE, hline = FALSE)
   ici.plot = ici.plot +
@@ -79,8 +79,9 @@ pp = lapply(features, function(feat) {
     theme(legend.position = "none", title = element_text(size = 8), axis.title = element_text(size = 8))
   
   list(
-    ggMarginal(pi.plot, type = "histogram", fill = "transparent"),
-    ggMarginal(ici.plot, type = "histogram", fill = "transparent", margins = "y")
+    ggMarginal(pi.plot, type = "histogram", fill = "transparent", margins = "x"),
+    ici.plot
+    #ggMarginal(ici.plot, type = "histogram", fill = "transparent", margins = "y")
   )
 })
 pp = unlist(pp, recursive = FALSE)
