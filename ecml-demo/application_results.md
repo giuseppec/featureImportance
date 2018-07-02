@@ -1,10 +1,10 @@
-Application Results
+Simulations and Application
 ================
 
 Introduction
 ============
 
-In this short tutorial, we provide the code that reproduces the results of the application section of our article entitled "Visualizing the Feature Importance for Black Box Models". We used [`batchtools`](https://github.com/mllg/batchtools) to run our experiments. The files [`application_shapley_simulation.R`](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_shapley_simulation.R) and [`application_importance_realdata.R`](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_importance_realdata.R) contain the `batchtools` code for the expermients and can be found in this [directory](https://github.com/giuseppec/featureImportance/tree/master/ecml-demo). The directory also includes the results of both files in an `.Rds` file which is used in the code below to produce the figures and tables.
+In this short tutorial, we provide the code that reproduces the results of the application section of our article entitled "Visualizing the Feature Importance for Black Box Models". We used [`batchtools`](https://github.com/mllg/batchtools) to run our experiments. The files [`application_pi_simulation.R`](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_pi_simulation.R), [`application_shapley_simulation.R`](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_shapley_simulation.R) and [`application_importance_realdata.R`](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_importance_realdata.R) contain the `batchtools` code to reproduce the expermients and can be found in this [directory](https://github.com/giuseppec/featureImportance/tree/master/ecml-demo). The directory also includes the results of both files in an `.Rds` file which is used in the code below to produce the figures and tables.
 
 Load Packages
 =============
@@ -101,7 +101,7 @@ iciV2 = iciV2 +
 gridExtra::grid.arrange(iciV1, iciV2, nrow = 1)
 ```
 
-![PI curves of *X*<sub>1</sub> and *X*<sub>2</sub> calculated using all observations (black line) and conditional on *X*<sub>3</sub> = 0 (red line) and *X*<sub>3</sub> = 1 (green line). The points plotted on the lines refer to the observed feature values that were used as grid points to produce the corresponding PI curves.](application_results_files/figure-markdown_github/unnamed-chunk-3-1.png)
+![PI curves of *X*<sub>1</sub> and *X*<sub>2</sub> calculated using all observations (black line) and conditional on *X*<sub>3</sub> = 0 (red line) and *X*<sub>3</sub> = 1 (green line). The points plotted on the lines refer to the observed feature values that were used as grid points to produce the corresponding PI curves.](application_results_files/figure-markdown_github/conditional-1.png)
 
 Shapley Feature Importance
 --------------------------

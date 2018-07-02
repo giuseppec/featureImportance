@@ -58,7 +58,7 @@ tab = rbind(
 kable(tab)
 ```
 
-```{r, echo=TRUE, message=FALSE, warning=FALSE, fig.width=10, fig.height=6, fig.cap="PI curves of $X_1$ and $X_2$ calculated using all observations (black line) and conditional on $X_3 = 0$ (red line) and $X_3 = 1$ (green line). The points plotted on the lines refer to the observed feature values that were used as grid points to produce the corresponding PI curves.", results = 'hide', fig.pos="ht"}
+```{r conditional, echo=TRUE, message=FALSE, warning=FALSE, fig.width=10, fig.height=6, fig.cap="PI curves of $X_1$ and $X_2$ calculated using all observations (black line) and conditional on $X_3 = 0$ (red line) and $X_3 = 1$ (green line). The points plotted on the lines refer to the observed feature values that were used as grid points to produce the corresponding PI curves.", results = 'hide', fig.pos="ht"}
 mid = "mse"
 pfi = res[[1]]
 
