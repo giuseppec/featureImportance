@@ -107,16 +107,22 @@ ge = function(mod, data, target, measures, features) {
 }
 
 # function to plot PI and ICI curves
-plotPartialImportance = function(pfi, feat, learner.id, mid, individual = FALSE, rug = TRUE, hline = TRUE,
+plotPartialImportance = function(pfi, feat, learner.id = NULL, mid, individual = FALSE, rug = TRUE, hline = TRUE,
   grid.points = TRUE, subset.observation.index = NULL, subset.replaced.index = NULL) {
-  d = copy(subset(pfi, learner == learner.id & features == feat))
+  if (is.null(learner.id)) {
+    d = copy(subset(pfi, features == feat))
+    by = c("replace.id", "features", "feature.value")
+  } else {
+    d = copy(subset(pfi, learner == learner.id & features == feat))
+    by = c("replace.id", "features", "learner", "feature.value")
+  }
   if (!is.null(subset.observation.index))
     d = subset(d, row.id %in% subset.observation.index)
   if (!is.null(subset.replaced.index))
     d = subset(d, replace.id %in% subset.replaced.index)
 
   pi = d[, lapply(.SD, mean, na.rm = TRUE),
-    .SDcols = c(mid), by = c("replace.id", "features", "learner", "feature.value")]
+    .SDcols = c(mid), by = by]
 
   pp = ggplot(data = as.data.frame(pi), aes_string(x = "feature.value", y = mid))
   if (grid.points)
@@ -137,11 +143,45 @@ plotPartialImportance = function(pfi, feat, learner.id, mid, individual = FALSE,
 getImpTable = function(pfi, subset.ind = NULL, learner.id = "regr.randomForest", mid = "mse", sort = TRUE) {
   if (!is.null(subset.ind))
     pfi = subset(pfi, row.id %nin% subset.ind & replace.id %nin% subset.ind)
-  imp = pfi[, lapply(.SD, mean, na.rm = TRUE), .SDcols = mid, by = c("features", "learner")]
-  imp = split(imp, imp$learner)[[learner.id]]
+  lcol = "learner" %in% colnames(pfi)
+  if (lcol) {
+    by = c("features", "learner")
+  } else {
+    by = "features"
+  }
+
+  imp = pfi[, lapply(.SD, mean, na.rm = TRUE), .SDcols = mid, by = by]
+  if (lcol)
+    imp = split(imp, imp$learner)[[learner.id]]
   imp[[mid]] = round(imp[[mid]], 1)
-  if (sort)
-    imp = sortByCol(imp[, -"learner"], mid, asc = FALSE) else
+  if (sort) {
+    if (lcol)
+      imp = sortByCol(imp[, -"learner"], mid, asc = FALSE) else
+        imp = sortByCol(imp, mid, asc = FALSE)
+  } else {
+    if (lcol)
       imp = imp[, -"learner"]
+  }
   setColNames(as.data.frame(rbind(imp[[mid]])), imp$features)
+}
+
+pasteMeanSd = function(x) {
+  x.mean = mean(x)
+  if (x.mean != 0)
+    paste0(round(x.mean, 2), " (", round(sd(x), 2), ")") else
+      x.mean
+}
+
+conditionalPFI = function(pfi, var, group0, group1, group.var,
+  mid = "mse", aggregate = TRUE) {
+  by = c("replace.id", "features", "feature.value", group.var)
+  ici = subset(pfi, features == var)
+  ici[[group.var]] = as.factor(as.numeric(ici$row.id %in% group1))
+  pi = rbind(
+    subset(ici, row.id %in% group0 & replace.id %in% group0),
+    subset(ici, row.id %in% group1 & replace.id %in% group1)
+  )
+  if (aggregate)
+    pi = pi[, lapply(.SD, mean, na.rm = TRUE), .SDcols = mid, by = by]
+  return(pi)
 }

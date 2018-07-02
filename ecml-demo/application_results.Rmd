@@ -1,5 +1,5 @@
 ---
-title: "Application Results"
+title: "Simulations and Application"
 output: 
   github_document
 ---
@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 In this short tutorial, we provide the code that reproduces the results of the application section of our article entitled "Visualizing the Feature Importance for Black Box Models".
 We used [`batchtools`](https://github.com/mllg/batchtools) to run our experiments. 
-The files [`application_shapley_simulation.R`](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_shapley_simulation.R) and [`application_importance_realdata.R`](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_importance_realdata.R) contain the `batchtools` code for the expermients and can be found in this [directory](https://github.com/giuseppec/featureImportance/tree/master/ecml-demo).
+The files [`application_pi_simulation.R`](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_pi_simulation.R), [`application_shapley_simulation.R`](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_shapley_simulation.R) and [`application_importance_realdata.R`](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_importance_realdata.R) contain the `batchtools` code to reproduce the expermients and can be found in this [directory](https://github.com/giuseppec/featureImportance/tree/master/ecml-demo).
 The directory also includes the results of both files in an `.Rds` file which is used in the code below to produce the figures and tables.
 
 # Load Packages
@@ -29,67 +29,79 @@ library(mlr)
 source("helper_functions.R")
 ```
 
-# Produce Table
+# Simulation
 
-```{r echo=TRUE, message=FALSE, warning=FALSE, results='asis'}
-pfi = readRDS("application_importance_realdata.Rds")
-mid = "mse"
+## PI and ICI Plots
 
-# get index for LSTAT > 10 in order to remove those observations
-pi.ind = unique(pfi$replace.id[pfi$features == "LSTAT" & pfi$feature.value > 10])
-# compute integral of each ICI curve and select observations with negative ICI integral
-ici = subset(pfi, learner == "regr.randomForest" & features == "LSTAT")
-ici.integral = ici[, lapply(.SD, mean, na.rm = TRUE), .SDcols = mid, by = "row.id"]
-ici.ind = which(ici.integral[[mid]] <= 0)
+```{r}
+res = readRDS("application_pi_simulation.Rds")
 
-# produce table
-imp = getImpTable(pfi)
-imp.pi = getImpTable(pfi, pi.ind)
-imp.ici = getImpTable(pfi, ici.ind)
-kable(rbind(imp, imp.pi, imp.ici))
+imp.global = rbindlist(lapply(res, function(x) {
+  getImpTable(x, mid = "mse", sort = FALSE)
+}))
+
+imp1 = rbindlist(lapply(res, function(x) {
+  remove0 = unique(x$replace.id[x$features == "V3" & x$feature.value == 0])
+  getImpTable(x, subset.ind = remove0, mid = "mse", sort = FALSE)
+}))
+
+imp0 = rbindlist(lapply(res, function(x) {
+  remove1 = unique(x$replace.id[x$features == "V3" & x$feature.value == 1])
+  getImpTable(x, subset.ind = remove1, mid = "mse", sort = FALSE)
+}))
+
+tab = rbind(
+  imp.global[, lapply(.SD, pasteMeanSd)],
+  imp0[, lapply(.SD, pasteMeanSd)],
+  imp1[, lapply(.SD, pasteMeanSd)]
+)
+kable(tab)
 ```
 
-# Produce PI and ICI plots
-
-```{r piplot, echo=TRUE, message=FALSE, warning=FALSE, fig.width=7, fig.height=5, fig.cap="PI and ICI plots for a random forest and the two most important features of the Boston housing data (LSTAT and RM). The horizontal lines in the PI plots represent the value of the global PFI (i.e. the integral of the PI curve). Marginal distribution histograms for features are added to the PI and ICI plot margins. The ICI curve with the largest integral is highlighted in green and the curve with the smallest integral in red.", fig.pos="ht"}
-learner.id = "regr.randomForest"
+```{r, echo=TRUE, message=FALSE, warning=FALSE, fig.width=10, fig.height=6, fig.cap="PI curves of $X_1$ and $X_2$ calculated using all observations (black line) and conditional on $X_3 = 0$ (red line) and $X_3 = 1$ (green line). The points plotted on the lines refer to the observed feature values that were used as grid points to produce the corresponding PI curves.", results = 'hide', fig.pos="ht"}
 mid = "mse"
-features = c("LSTAT", "RM")
+pfi = res[[1]]
 
-pp = lapply(features, function(feat) {
-  ici = subset(pfi, learner == learner.id & features == feat)
-  ici.integral = ici[, lapply(.SD, mean, na.rm = TRUE), .SDcols = mid, by = "row.id"]
-  ind = c(which.min(ici.integral[[mid]]), which.max(ici.integral[[mid]]))
-  ici.obs = subset(ici, row.id %in% ici.integral$row.id[ind])
+# Get index of observations for V3 = 0 and V3 = 1
+bin0 = subset(pfi, features == "V3" & feature.value == 0)
+bin0 = unique(bin0$replace.id)
+bin1 = subset(pfi, features == "V3" & feature.value == 1)
+bin1 = unique(bin1$replace.id)
 
-  # PI plot
-  pi.plot = plotPartialImportance(pfi, feat, learner.id, mid, rug = FALSE)
-  pi.plot = pi.plot +
-      labs(title = "PI plot", y = bquote(Delta~L ~ "based on" ~ .(toupper(mid)))) +
-      xlab(feat) +
-      theme(legend.position = "none", title = element_text(size = 8), axis.title = element_text(size = 8))
-  
-  # ICI plot
-  ici.plot = plotPartialImportance(pfi, feat, learner.id, mid,
-    individual = TRUE, grid.points = FALSE, rug = FALSE, hline = FALSE)
-  ici.plot = ici.plot +
-    geom_line(data = ici.obs, aes_string(x = "feature.value", y = mid, color = "factor(row.id)", group = "row.id")) +
-    labs(title = "ICI plot", y = bquote(Delta~L ~ "based on" ~ .(toupper(mid)))) +
-    xlab(feat) +
-    theme(legend.position = "none", title = element_text(size = 8), axis.title = element_text(size = 8))
-  
-  list(
-    ggMarginal(pi.plot, type = "histogram", fill = "transparent", margins = "x"),
-    ici.plot
-    #ggMarginal(ici.plot, type = "histogram", fill = "transparent", margins = "y")
-  )
-})
-pp = unlist(pp, recursive = FALSE)
+var = "V1"
+pi = conditionalPFI(pfi, var, bin0, bin1, group.var = "V3")
+ici = subset(pfi, features == var)
+ici$V3 = as.factor(as.numeric(ici$row.id %in% bin1))
 
-do.call(grid.arrange, pp[c(1,3,2,4)])
+iciV1 = plotPartialImportance(pfi, feat = var,
+  mid = mid, individual = FALSE, hline = FALSE, rug = FALSE) +
+  xlab(var)
+iciV1 = iciV1 + 
+  geom_line(data = pi, aes_string(x = "feature.value", y = mid, color = "V3")) +
+  geom_point(data = pi, aes_string(x = "feature.value", y = mid, color = "V3")) +
+  labs(y = bquote(Delta~L ~ "based on" ~ .(toupper(mid))), x = bquote(X[1]), color = bquote(X[3])) +
+  ylim(c(-10, 300))
+
+var = "V2"
+pi = conditionalPFI(pfi, var, bin0, bin1, group.var = "V3")
+ici = subset(pfi, features == var)
+ici$V3 = as.factor(as.numeric(ici$row.id %in% bin1))
+
+iciV2 = plotPartialImportance(pfi, feat = var,
+  mid = mid, individual = FALSE, hline = FALSE, rug = FALSE) +
+  xlab(var)
+
+iciV2 = iciV2 + 
+  geom_line(data = pi, aes_string(x = "feature.value", y = mid, color = "V3")) +
+  geom_point(data = pi, aes_string(x = "feature.value", y = mid, color = "V3")) +
+  labs(y = bquote(Delta~L ~ "based on" ~ .(toupper(mid))), x = bquote(X[2]), color = bquote(X[3])) +
+  ylim(c(-10, 300))
+
+gridExtra::grid.arrange(iciV1, iciV2, nrow = 1)
 ```
 
-# Produce Shapley Feature Importance Plots
+
+## Shapley Feature Importance
 
 ```{r shapley, echo=TRUE, message=FALSE, warning=FALSE, fig.width=10, fig.height=6, fig.cap="Panel (a) shows the results of a single run, consisting of sampling test data and computing the importance on the previously fitted models. The first numbers on the left refer to the model performance (MSE) using all features. The other numbers are the SFIMP values which sum up to the total explainable performance. The percentages refer to the proportion of explained importance. Panel (b) shows the results of 500 repetitions of the experiment. The plots display the distribution of ratios of the importance values for $X_1$ and $X_2$ with respect to $X_3$ computed by SFIMP, by the difference-based PFI and by the ratio-based PFI.", results = 'hide', fig.pos="ht"}
 ### Plot Example
@@ -150,3 +162,66 @@ pp = pp + scale_x_discrete(labels = new.names) +
   ggtitle("(b) Simulation with 500 repetitions")
 grid.arrange(plot.ex, pp, heights = c(1.5, 2.5))
 ```
+
+# Application on Real Data
+
+## Produce Table
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results='asis'}
+pfi = readRDS("application_importance_realdata.Rds")
+mid = "mse"
+
+# get index for LSTAT > 10 in order to remove those observations
+pi.ind = unique(pfi$replace.id[pfi$features == "LSTAT" & pfi$feature.value > 10])
+# compute integral of each ICI curve and select observations with negative ICI integral
+ici = subset(pfi, learner == "regr.randomForest" & features == "LSTAT")
+ici.integral = ici[, lapply(.SD, mean, na.rm = TRUE), .SDcols = mid, by = "row.id"]
+ici.ind = which(ici.integral[[mid]] <= 0)
+
+# produce table
+imp = getImpTable(pfi)
+imp.pi = getImpTable(pfi, pi.ind)
+imp.ici = getImpTable(pfi, ici.ind)
+kable(rbind(imp, imp.pi, imp.ici))
+```
+
+## Produce PI and ICI plots
+
+```{r piplot, echo=TRUE, message=FALSE, warning=FALSE, fig.width=7, fig.height=5, fig.cap="PI and ICI plots for a random forest and the two most important features of the Boston housing data (LSTAT and RM). The horizontal lines in the PI plots represent the value of the global PFI (i.e. the integral of the PI curve). Marginal distribution histograms for features are added to the PI and ICI plot margins. The ICI curve with the largest integral is highlighted in green and the curve with the smallest integral in red.", fig.pos="ht"}
+learner.id = "regr.randomForest"
+mid = "mse"
+features = c("LSTAT", "RM")
+
+pp = lapply(features, function(feat) {
+  ici = subset(pfi, learner == learner.id & features == feat)
+  ici.integral = ici[, lapply(.SD, mean, na.rm = TRUE), .SDcols = mid, by = "row.id"]
+  ind = c(which.min(ici.integral[[mid]]), which.max(ici.integral[[mid]]))
+  ici.obs = subset(ici, row.id %in% ici.integral$row.id[ind])
+
+  # PI plot
+  pi.plot = plotPartialImportance(pfi, feat, learner.id, mid, rug = FALSE)
+  pi.plot = pi.plot +
+      labs(title = "PI plot", y = bquote(Delta~L ~ "based on" ~ .(toupper(mid)))) +
+      xlab(feat) +
+      theme(legend.position = "none", title = element_text(size = 8), axis.title = element_text(size = 8))
+  
+  # ICI plot
+  ici.plot = plotPartialImportance(pfi, feat, learner.id, mid,
+    individual = TRUE, grid.points = FALSE, rug = FALSE, hline = FALSE)
+  ici.plot = ici.plot +
+    geom_line(data = ici.obs, aes_string(x = "feature.value", y = mid, color = "factor(row.id)", group = "row.id")) +
+    labs(title = "ICI plot", y = bquote(Delta~L ~ "based on" ~ .(toupper(mid)))) +
+    xlab(feat) +
+    theme(legend.position = "none", title = element_text(size = 8), axis.title = element_text(size = 8))
+  
+  list(
+    ggMarginal(pi.plot, type = "histogram", fill = "transparent", margins = "x"),
+    ici.plot
+    #ggMarginal(ici.plot, type = "histogram", fill = "transparent", margins = "y")
+  )
+})
+pp = unlist(pp, recursive = FALSE)
+
+do.call(grid.arrange, pp[c(1,3,2,4)])
+```
+
