@@ -22,18 +22,12 @@ target = getTaskTargetNames(task)
 test = getTaskData(task)[-train.ind, ]
 
 # specify models
-lrn = list(
-  makeLearner("regr.lm"),
-  makeLearner("regr.ksvm"),
-  makeLearner("regr.randomForest", importance = TRUE)
-)
+lrn = makeLearner("regr.randomForest", importance = TRUE)
 
 set.seed(1)
-mod = lapply(lrn, function(x) train(x, task, subset = train.ind))
-for (m in mod) {
-  addProblem(name = getLearnerId(m$learner),
-    data = list(mod = m, target = target, test = test), seed = 1)
-}
+mod = train(lrn, task, subset = train.ind)
+addProblem(name = getLearnerId(m$learner),
+  data = list(mod = mod, target = target, test = test), seed = 1)
 
 addAlgorithm("pfi", fun = function(job, instance, data, feat) {
   # get Task
@@ -43,35 +37,16 @@ addAlgorithm("pfi", fun = function(job, instance, data, feat) {
   mod = data$mod
 
   # define measures
-  measures = list(mse, mae, medae, rmse, medse, pred)
-  mid = vcapply(measures, function(x) x$id)
+  measures = mse
 
-  # measure performance on test data
-  unpermuted.perf = featureImportance:::measurePerformance.WrappedModel(mod, data = test,
-    target = target, measures = measures, local = TRUE)
-  unpermuted.perf$pred = 0
+  # compute local feature importance by replacing feature values for all test data points
+  pfi = featureImportance(mod, data = test, features = list(features),
+    target = target, measures = measures, local = TRUE, replace.ids = 1:nrow(test))
+  imp = pfi$importance
+  #na.ind = imp$replace.id == imp$row.id
+  #imp[na.ind, measures$id] = NA
 
-  # create all permutations
-  data.perm = cartesian(test, features, target)
-  permuted.perf = featureImportance:::measurePerformance.WrappedModel(mod, data = data.perm,
-    target = target, measures = measures, predict.fun = predict.fun, local = TRUE)
-  permuted.perf$row.id = data.perm$obs.id
-
-  # measure PFI by taking differences
-  pfi = lapply(split(permuted.perf, data.perm$replace.id), function(x) {
-    imp = featureImportance:::measureFeatureImportance(x, unpermuted.perf)
-  })
-
-  # join with feature values
-  pfi = lapply(1:length(pfi), function(i)
-    cbind(pfi[[i]], feature.value = test[i , features], features = features))
-  pfi = rbindlist(pfi, idcol = "replace.id")
-
-  list(
-    pfi = cbind(pfi, learner = getLearnerId(mod$learner)),
-    unpermuted.perf = unpermuted.perf,
-    permuted.perf = permuted.perf
-    )
+  list(pfi = cbind(imp, learner = getLearnerId(mod$learner)))
 })
 
 # fit model on train data
@@ -88,10 +63,6 @@ pfi = rbindlist(reduceResultsList(findDone(), fun = function(x) {
 }))
 
 # subset results
-pfi = subset(pfi,
-  subset = learner == "regr.randomForest",
-  select = -c(mae, medae, rmse, medse, pred))
-pfi[is.na(pfi)] = 0
 pfi$feature.value = as.numeric(as.character(pfi$feature.value))
 
 saveRDS(pfi, file = paste0(path, ".Rds"))
