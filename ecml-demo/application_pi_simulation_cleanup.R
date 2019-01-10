@@ -37,11 +37,11 @@ task = makeRegrTask(data = X, target = "y")
 
 # create learners
 lrn = makeLearner("regr.randomForest", ntree = 100, importance = TRUE)
-measures = list(mse, mae, pred)
 
 # add problems
 mod = train(lrn, task)
-prob.pars = list(mod = mod, sigma = sig, n = 100, generateY = generateY, measures = measures)
+saveRDS(mod, file = paste0(path, "_mod.Rds"))
+prob.pars = list(mod = mod, sigma = sig, n = 100, generateY = generateY, measures = mlr::mse)
 addProblem(name = getLearnerId(lrn), data = prob.pars, seed = 1)
 
 # add algorithms
@@ -52,7 +52,6 @@ addAlgorithm("pfi", fun = function(job, instance, data) {
   target = getTaskDesc(mod)$target
   generateY = data$generateY
   measures = data$measures
-  mid = vcapply(measures, function(x) x$id)
   # create test with repl seed
   set.seed(job$repl)
   test = as.data.frame(mvrnorm(data$n, mu = rep(0, ncol(data$sig)), Sigma = data$sig))
@@ -63,7 +62,6 @@ addAlgorithm("pfi", fun = function(job, instance, data) {
     # measure performance on test data
     unpermuted.perf = featureImportance:::measurePerformance.WrappedModel(mod,
       data = test, target = target, measures = measures, local = TRUE)
-    unpermuted.perf$pred = 0
 
     # create all permutations
     data.perm = cartesian(test, features, target)
@@ -88,7 +86,15 @@ addAlgorithm("pfi", fun = function(job, instance, data) {
   pfi = rbindlist(pfi)
   pfi[is.na(pfi)] = 0
 
-  list(res = pfi, data = test)
+  pfi2 = lapply(feat, function(features) {
+    imp = featureImportance(mod, data = test, features = list(features),
+      target = target, measures = measures, local = TRUE, replace.ids = 1:nrow(test))
+    return(imp$importance)
+  })
+  pfi2 = setNames(pfi2, feat)
+  pfi2 = rbindlist(pfi2)
+
+  list(res = pfi, res2 = pfi2, data = test)
 })
 
 addExperiments(repls = 100)
@@ -99,11 +105,4 @@ res = reduceResultsList(findDone(), fun = function(x, job) {
   x$res
 })
 
-saveRDS(res, file = paste0(path, ".Rds"))
-
-for (i in 1:length(res)) {
-  res[[i]] = res[[i]][, mae := NULL]
-  res[[i]] = res[[i]][, pred := NULL]
-}
-
-saveRDS(res, file = paste0(path, ".Rds"))
+saveRDS(res, file = paste0(path, "_cleanup.Rds"))

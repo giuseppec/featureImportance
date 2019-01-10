@@ -174,7 +174,7 @@ mid = "mse"
 # get index for LSTAT > 10 in order to remove those observations
 pi.ind = unique(pfi$replace.id[pfi$features == "LSTAT" & pfi$feature.value > 10])
 # compute integral of each ICI curve and select observations with negative ICI integral
-ici = subset(pfi, learner == "regr.randomForest" & features == "LSTAT")
+ici = subset(pfi, features == "LSTAT")
 ici.integral = ici[, lapply(.SD, mean, na.rm = TRUE), .SDcols = mid, by = "row.id"]
 ici.ind = which(ici.integral[[mid]] <= 0)
 

@@ -138,7 +138,7 @@ computeFeatureImportanceIteration = function(i, method, features, unpermuted.per
     # Compare true and shuffled performance
     ret = measureFeatureImportance(permuted.perf, unpermuted.perf, importance.fun = importance.fun)
     if (local & method == "replace") {
-      ret = cbind(ret, feature.value = data.perm[ , feature])
+      ret = cbind(ret, feature.value = type.convert(data.perm[ , feature]))
     }
     return(ret)
   })
