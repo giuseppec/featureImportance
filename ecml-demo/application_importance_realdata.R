@@ -1,14 +1,16 @@
-library(OpenML)
-library(batchtools)
+library(checkpoint)
+checkpoint("2018-03-01", project = "ecml-demo/helper")
+source("ecml-demo/helper/packages.R")
+install()
 library(featureImportance)
 
 # create registry
-path = "application_importance_realdata"
+path = "ecml-demo/application_importance_realdata"
 unlink(path, recursive = TRUE)
 reg = makeExperimentRegistry(
   file.dir = path,
-  packages = c("mlr", "OpenML", "BBmisc", "featureImportance"),
-  source = "helper_functions.R",
+  packages = c("featureImportance"),
+  source = paste0("ecml-demo/", c("helper/functions.R", "helper/packages.R")),
   seed = 123)
 reg$cluster.functions = makeClusterFunctionsSocket(30)
 

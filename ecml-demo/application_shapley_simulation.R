@@ -1,21 +1,16 @@
-library(mlr)
-library(BBmisc)
-library(data.table)
-library(ggplot2)
-library(checkmate)
-library(data.table)
-library(stringi)
-library(MASS)
+library(checkpoint)
+checkpoint("2018-03-01", project = "ecml-demo/helper")
+source("ecml-demo/helper/packages.R")
+install()
 library(featureImportance)
-library(batchtools)
 
 # create batchtools registry
-path = "application_shapley_simulation"
+path = "ecml-demo/application_shapley_simulation"
 unlink(path, recursive = TRUE)
 reg = makeExperimentRegistry(
   file.dir = path,
-  packages = c("mlr", "BBmisc", "featureImportance", "MASS", "checkmate", "stringi"),
-  source = "helper_functions.R",
+  packages = c("featureImportance"),
+  source = paste0("ecml-demo/", c("helper/functions.R", "helper/packages.R")),
   seed = 123)
 # uncomment this line to run experiments in parallel
 reg$cluster.functions = makeClusterFunctionsSocket(30)
@@ -55,12 +50,25 @@ addAlgorithm("pfi", fun = function(job, instance, data) {
   target = getTaskDesc(mod)$target
   generateY = data$generateY
   measures = data$measures
+
   # create test with repl seed
   set.seed(job$repl)
   X = as.data.frame(mvrnorm(data$n, mu = rep(0, ncol(data$sig)), Sigma = data$sig))
   X$y = generateY(X)
 
-  list(res = pfi(mod, data = X, target, measures, features = feat), data = X)
+  pfi = pfi(mod, data = X, target, measures, features = feat)
+
+  pfi.diff = pfi$pfi.diff$importance[, lapply(.SD, mean), by = "features"]
+  pfi.ratio = pfi$pfi.ratio$importance[, lapply(.SD, mean), by = "features"]
+
+  pfi.diff = cbind(pfi.diff[, .(feature = features, mse = mse)], method = "pfi.diff")
+  pfi.ratio = cbind(pfi.ratio[, .(feature = features, mse = mse)], method = "pfi.ratio")
+
+  ge = ge(mod, data = X, target, measures, feat)
+  ge = cbind(rbindlist(ge, idcol = "method"), feature = names(ge))
+
+  res = rbind(pfi.diff, pfi.ratio, ge)
+  list(res = res, pfi = pfi, ge = ge, data = X)
 })
 
 addAlgorithm("shapley", fun = function(job, instance, data) {
@@ -75,24 +83,29 @@ addAlgorithm("shapley", fun = function(job, instance, data) {
   X = as.data.frame(mvrnorm(data$n, mu = rep(0, ncol(data$sig)), Sigma = data$sig))
   X$y = generateY(X)
 
-  list(res = shapleyImportance(mod, data = X, value.function = vGE,
-    target = target, measures = measures, features = feat), data = X)
+  shapley = shapleyImportance(mod, data = X, value.function = vGE,
+    target = target, measures = measures, features = feat)
+  res = cbind(shapley$shapley.value, method = "shapley")
+
+  list(res = res, shapley = shapley, data = X)
 })
 
-addAlgorithm("ge", fun = function(job, instance, data) {
-  # get static stuff
-  mod = data$mod
-  feat = mod$features
-  target = getTaskDesc(mod)$target
-  generateY = data$generateY
-  measures = data$measures
-  # create test with repl seed
-  set.seed(job$repl)
-  X = as.data.frame(mvrnorm(data$n, mu = rep(0, ncol(data$sig)), Sigma = data$sig))
-  X$y = generateY(X)
-
-  list(res = ge(mod, data = X, target, measures, feat), data = X)
-})
+# addAlgorithm("ge", fun = function(job, instance, data) {
+#   # get static stuff
+#   mod = data$mod
+#   feat = mod$features
+#   target = getTaskDesc(mod)$target
+#   generateY = data$generateY
+#   measures = data$measures
+#   # create test with repl seed
+#   set.seed(job$repl)
+#   X = as.data.frame(mvrnorm(data$n, mu = rep(0, ncol(data$sig)), Sigma = data$sig))
+#   X$y = generateY(X)
+#   res = ge(mod, data = X, target, measures, feat)
+#   res = cbind(rbindlist(res, idcol = "method"), feature = names(res))
+#
+#   list(res = res, data = X)
+# })
 
 addExperiments(repls = 500)
 submitJobs(ids = findNotSubmitted(), reg = reg)
@@ -106,17 +119,8 @@ job = getJobTable()
 repl = job$repl
 learner = job$problem
 cols = c("method", "feature", "mse")
-res.cleanup = lapply(res, function(x) {
-  if ("V1" %in% names(x))
-    res = rbindlist(lapply(x, rbindlist, idcol = "method"), idcol = "feature") else
-      if (inherits(x, "ShapleyImportance"))
-        res = cbind(x$shapley.value, method = "shapley") else {
-          res = cbind(rbindlist(x, idcol = "method"), feature = names(x))
-        }
-  setcolorder(res, cols)
+res.cleanup = lapply(1:length(res), function(i) {
+  cbind(setcolorder(res[[i]], cols), learner = learner[i], repl = repl[i])
 })
-res.cleanup = lapply(1:length(res.cleanup), function(i) {
-  cbind(res.cleanup[[i]], learner = learner[i], repl = repl[i])
-  })
 res.cleanup = rbindlist(res.cleanup)
 saveRDS(res.cleanup, file = paste0(path, ".Rds"))
