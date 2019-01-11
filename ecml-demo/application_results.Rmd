@@ -26,7 +26,7 @@ library(xtable)
 library(BBmisc)
 library(knitr)
 library(mlr)
-source("helper_functions.R")
+source("helper/functions.R")
 ```
 
 # Simulation
@@ -105,7 +105,7 @@ gridExtra::grid.arrange(iciV1, iciV2, nrow = 1)
 
 ```{r shapley, echo=TRUE, message=FALSE, warning=FALSE, fig.width=10, fig.height=6, fig.cap="Panel (a) shows the results of a single run, consisting of sampling test data and computing the importance on the previously fitted models. The first numbers on the left refer to the model performance (MSE) using all features. The other numbers are the SFIMP values which sum up to the total explainable performance. The percentages refer to the proportion of explained importance. Panel (b) shows the results of 500 repetitions of the experiment. The plots display the distribution of ratios of the importance values for $X_1$ and $X_2$ with respect to $X_3$ computed by SFIMP, by the difference-based PFI and by the ratio-based PFI.", results = 'hide', fig.pos="ht"}
 ### Plot Example
-res.ex = readRDS("application_shapley_simulation_old.Rds")
+res.ex = readRDS("application_shapley_simulation.Rds")
 # select one single run of the simulation with 500 repetitions to plot the example
 res.ex = subset(res.ex, repl == 2 & method %in% c("shapley", "geP"), select = c("learner", "feature", "mse", "method"))
 # specify colour and legend text
@@ -142,7 +142,7 @@ plot.ex = plot.ex +
 
 
 ### Plot Simulation Results
-res.cleanup = readRDS("application_shapley_simulation_old.Rds")
+res.cleanup = readRDS("application_shapley_simulation.Rds")
 # compute ratio of the importance values w.r.t feature "V3"
 res.cleanup[, ratio := mse/mse[feature == "V3"], by = c("method", "learner", "repl")]
 res.cleanup = subset(res.cleanup, method %in% c("pfi.diff", "pfi.ratio", "shapley") & feature != "V3")

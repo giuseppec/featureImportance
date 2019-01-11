@@ -1,13 +1,24 @@
 Simulations and Application
 ================
 
-Introduction
-============
+# Introduction
 
-In this short tutorial, we provide the code that reproduces the results of the application section of our article entitled "Visualizing the Feature Importance for Black Box Models". We used [`batchtools`](https://github.com/mllg/batchtools) to run our experiments. The files [`application_pi_simulation.R`](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_pi_simulation.R), [`application_shapley_simulation.R`](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_shapley_simulation.R) and [`application_importance_realdata.R`](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_importance_realdata.R) contain the `batchtools` code to reproduce the expermients and can be found in this [directory](https://github.com/giuseppec/featureImportance/tree/master/ecml-demo). The directory also includes the results of both files in an `.Rds` file which is used in the code below to produce the figures and tables.
+In this short tutorial, we provide the code that reproduces the results
+of the application section of our article entitled “Visualizing the
+Feature Importance for Black Box Models”. We used
+[`batchtools`](https://github.com/mllg/batchtools) to run our
+experiments. The files
+[`application_pi_simulation.R`](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_pi_simulation.R),
+[`application_shapley_simulation.R`](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_shapley_simulation.R)
+and
+[`application_importance_realdata.R`](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_importance_realdata.R)
+contain the `batchtools` code to reproduce the expermients and can be
+found in this
+[directory](https://github.com/giuseppec/featureImportance/tree/master/ecml-demo).
+The directory also includes the results of both files in an `.Rds` file
+which is used in the code below to produce the figures and tables.
 
-Load Packages
-=============
+# Load Packages
 
 ``` r
 # load required packages
@@ -19,14 +30,12 @@ library(xtable)
 library(BBmisc)
 library(knitr)
 library(mlr)
-source("helper_functions.R")
+source("helper/functions.R")
 ```
 
-Simulation
-==========
+# Simulation
 
-PI and ICI Plots
-----------------
+## PI and ICI Plots
 
 ``` r
 res = readRDS("application_pi_simulation.Rds")
@@ -54,7 +63,7 @@ kable(tab)
 ```
 
 | V1             | V2             | V3           |
-|:---------------|:---------------|:-------------|
+| :------------- | :------------- | :----------- |
 | 77.98 (14.15)  | 76.76 (13.89)  | 62.76 (7.82) |
 | 152.49 (26.06) | 1.43 (1.32)    | 0            |
 | 1.26 (1.03)    | 151.49 (24.69) | 0            |
@@ -101,10 +110,14 @@ iciV2 = iciV2 +
 gridExtra::grid.arrange(iciV1, iciV2, nrow = 1)
 ```
 
-![PI curves of *X*<sub>1</sub> and *X*<sub>2</sub> calculated using all observations (black line) and conditional on *X*<sub>3</sub> = 0 (red line) and *X*<sub>3</sub> = 1 (green line). The points plotted on the lines refer to the observed feature values that were used as grid points to produce the corresponding PI curves.](application_results_files/figure-markdown_github/conditional-1.png)
+![PI curves of \(X_1\) and \(X_2\) calculated using all observations
+(black line) and conditional on \(X_3 = 0\) (red line) and \(X_3 = 1\)
+(green line). The points plotted on the lines refer to the observed
+feature values that were used as grid points to produce the
+corresponding PI
+curves.](application_results_files/figure-gfm/conditional-1.png)
 
-Shapley Feature Importance
---------------------------
+## Shapley Feature Importance
 
 ``` r
 ### Plot Example
@@ -166,13 +179,20 @@ pp = pp + scale_x_discrete(labels = new.names) +
 grid.arrange(plot.ex, pp, heights = c(1.5, 2.5))
 ```
 
-![Panel (a) shows the results of a single run, consisting of sampling test data and computing the importance on the previously fitted models. The first numbers on the left refer to the model performance (MSE) using all features. The other numbers are the SFIMP values which sum up to the total explainable performance. The percentages refer to the proportion of explained importance. Panel (b) shows the results of 500 repetitions of the experiment. The plots display the distribution of ratios of the importance values for *X*<sub>1</sub> and *X*<sub>2</sub> with respect to *X*<sub>3</sub> computed by SFIMP, by the difference-based PFI and by the ratio-based PFI.](application_results_files/figure-markdown_github/shapley-1.png)
+![Panel (a) shows the results of a single run, consisting of sampling
+test data and computing the importance on the previously fitted models.
+The first numbers on the left refer to the model performance (MSE) using
+all features. The other numbers are the SFIMP values which sum up to the
+total explainable performance. The percentages refer to the proportion
+of explained importance. Panel (b) shows the results of 500 repetitions
+of the experiment. The plots display the distribution of ratios of the
+importance values for \(X_1\) and \(X_2\) with respect to \(X_3\)
+computed by SFIMP, by the difference-based PFI and by the ratio-based
+PFI.](application_results_files/figure-gfm/shapley-1.png)
 
-Application on Real Data
-========================
+# Application on Real Data
 
-Produce Table
--------------
+## Produce Table
 
 ``` r
 pfi = readRDS("application_importance_realdata.Rds")
@@ -181,7 +201,7 @@ mid = "mse"
 # get index for LSTAT > 10 in order to remove those observations
 pi.ind = unique(pfi$replace.id[pfi$features == "LSTAT" & pfi$feature.value > 10])
 # compute integral of each ICI curve and select observations with negative ICI integral
-ici = subset(pfi, learner == "regr.randomForest" & features == "LSTAT")
+ici = subset(pfi, features == "LSTAT")
 ici.integral = ici[, lapply(.SD, mean, na.rm = TRUE), .SDcols = mid, by = "row.id"]
 ici.ind = which(ici.integral[[mid]] <= 0)
 
@@ -192,35 +212,33 @@ imp.ici = getImpTable(pfi, ici.ind)
 kable(rbind(imp, imp.pi, imp.ici))
 ```
 
-|  LSTAT|    RM|  NOX|  DIS|  CRIM|  PTRATIO|  AGE|  INDUS|  TAX|  RAD|    B|   ZN|  CHAS|
-|------:|-----:|----:|----:|-----:|--------:|----:|------:|----:|----:|----:|----:|-----:|
-|   32.0|  15.6|  3.9|  2.7|   2.6|      2.2|  1.2|    1.0|  1.0|  0.8|  0.8|  0.1|   0.1|
-|   10.4|  29.6|  1.5|  3.3|   0.8|      2.3|  0.8|    0.5|  1.2|  1.1|  0.6|  0.2|   0.2|
-|   35.3|  17.0|  4.3|  2.4|   2.5|      2.5|  1.1|    1.2|  0.8|  0.9|  0.8|  0.1|   0.1|
+| LSTAT |   RM | NOX | DIS | CRIM | PTRATIO | AGE | INDUS | TAX | RAD |   B |  ZN | CHAS |
+| ----: | ---: | --: | --: | ---: | ------: | --: | ----: | --: | --: | --: | --: | ---: |
+|  32.0 | 15.6 | 3.9 | 2.7 |  2.6 |     2.2 | 1.2 |   1.0 | 1.0 | 0.8 | 0.8 | 0.1 |  0.1 |
+|  10.4 | 29.6 | 1.5 | 3.3 |  0.8 |     2.3 | 0.8 |   0.5 | 1.2 | 1.1 | 0.6 | 0.2 |  0.2 |
+|  35.3 | 17.0 | 4.3 | 2.4 |  2.5 |     2.5 | 1.1 |   1.2 | 0.8 | 0.9 | 0.8 | 0.1 |  0.1 |
 
-Produce PI and ICI plots
-------------------------
+## Produce PI and ICI plots
 
 ``` r
-learner.id = "regr.randomForest"
 mid = "mse"
 features = c("LSTAT", "RM")
 
 pp = lapply(features, function(feat) {
-  ici = subset(pfi, learner == learner.id & features == feat)
+  ici = subset(pfi, features == feat)
   ici.integral = ici[, lapply(.SD, mean, na.rm = TRUE), .SDcols = mid, by = "row.id"]
   ind = c(which.min(ici.integral[[mid]]), which.max(ici.integral[[mid]]))
   ici.obs = subset(ici, row.id %in% ici.integral$row.id[ind])
 
   # PI plot
-  pi.plot = plotPartialImportance(pfi, feat, learner.id, mid, rug = FALSE)
+  pi.plot = plotPartialImportance(pfi, feat, mid, rug = FALSE)
   pi.plot = pi.plot +
       labs(title = "PI plot", y = bquote(Delta~L ~ "based on" ~ .(toupper(mid)))) +
       xlab(feat) +
       theme(legend.position = "none", title = element_text(size = 8), axis.title = element_text(size = 8))
   
   # ICI plot
-  ici.plot = plotPartialImportance(pfi, feat, learner.id, mid,
+  ici.plot = plotPartialImportance(pfi, feat, mid,
     individual = TRUE, grid.points = FALSE, rug = FALSE, hline = FALSE)
   ici.plot = ici.plot +
     geom_line(data = ici.obs, aes_string(x = "feature.value", y = mid, color = "factor(row.id)", group = "row.id")) +
@@ -239,4 +257,10 @@ pp = unlist(pp, recursive = FALSE)
 do.call(grid.arrange, pp[c(1,3,2,4)])
 ```
 
-![PI and ICI plots for a random forest and the two most important features of the Boston housing data (LSTAT and RM). The horizontal lines in the PI plots represent the value of the global PFI (i.e. the integral of the PI curve). Marginal distribution histograms for features are added to the PI and ICI plot margins. The ICI curve with the largest integral is highlighted in green and the curve with the smallest integral in red.](application_results_files/figure-markdown_github/piplot-1.png)
+![PI and ICI plots for a random forest and the two most important
+features of the Boston housing data (LSTAT and RM). The horizontal lines
+in the PI plots represent the value of the global PFI (i.e. the integral
+of the PI curve). Marginal distribution histograms for features are
+added to the PI and ICI plot margins. The ICI curve with the largest
+integral is highlighted in green and the curve with the smallest
+integral in red.](application_results_files/figure-gfm/piplot-1.png)

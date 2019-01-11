@@ -1,5 +1,5 @@
 library(checkpoint)
-checkpoint("2018-03-01", project = "ecml-demo/helper")
+checkpoint("2018-03-01", project = "ecml-demo/helper", forceProject = TRUE)
 source("ecml-demo/helper/packages.R")
 install()
 library(featureImportance)
@@ -38,20 +38,15 @@ saveRDS(mod, file = paste0(path, "_mod.Rds"))
 
 addAlgorithm("pfi", fun = function(job, instance, data, feat) {
   # get Task
-  features = feat
   target = data$target
   test = data$test
   mod = data$mod
 
-  # define measures
-  measures = mse
-
   # compute local feature importance by replacing feature values for all test data points
-  pfi = featureImportance(mod, data = test, features = list(features),
-    target = target, measures = measures, local = TRUE, replace.ids = 1:nrow(test))
-  imp = pfi$importance
+  pfi = featureImportance(mod, data = test, features = list(feat),
+    target = target, measures = mse, local = TRUE, replace.ids = 1:nrow(test))
 
-  return(imp)
+  return(pfi$importance)
 })
 
 # fit model on train data

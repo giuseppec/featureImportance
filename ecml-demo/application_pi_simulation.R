@@ -1,5 +1,5 @@
 library(checkpoint)
-checkpoint("2018-06-01", project = "ecml-demo/helper")
+checkpoint("2018-06-01", project = "ecml-demo/helper", forceProject = TRUE)
 source("ecml-demo/helper/packages.R")
 install()
 library(featureImportance)

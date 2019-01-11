@@ -1,5 +1,5 @@
 library(checkpoint)
-checkpoint("2018-03-01", project = "ecml-demo/helper")
+checkpoint("2018-03-01", project = "ecml-demo/helper", forceProject = TRUE)
 source("ecml-demo/helper/packages.R")
 install()
 library(featureImportance)
@@ -64,11 +64,8 @@ addAlgorithm("pfi", fun = function(job, instance, data) {
   pfi.diff = cbind(pfi.diff[, .(feature = features, mse = mse)], method = "pfi.diff")
   pfi.ratio = cbind(pfi.ratio[, .(feature = features, mse = mse)], method = "pfi.ratio")
 
-  ge = ge(mod, data = X, target, measures, feat)
-  ge = cbind(rbindlist(ge, idcol = "method"), feature = names(ge))
-
-  res = rbind(pfi.diff, pfi.ratio, ge)
-  list(res = res, pfi = pfi, ge = ge, data = X)
+  res = rbind(pfi.diff, pfi.ratio)
+  list(res = res, pfi = pfi, data = X)
 })
 
 addAlgorithm("shapley", fun = function(job, instance, data) {
@@ -90,22 +87,22 @@ addAlgorithm("shapley", fun = function(job, instance, data) {
   list(res = res, shapley = shapley, data = X)
 })
 
-# addAlgorithm("ge", fun = function(job, instance, data) {
-#   # get static stuff
-#   mod = data$mod
-#   feat = mod$features
-#   target = getTaskDesc(mod)$target
-#   generateY = data$generateY
-#   measures = data$measures
-#   # create test with repl seed
-#   set.seed(job$repl)
-#   X = as.data.frame(mvrnorm(data$n, mu = rep(0, ncol(data$sig)), Sigma = data$sig))
-#   X$y = generateY(X)
-#   res = ge(mod, data = X, target, measures, feat)
-#   res = cbind(rbindlist(res, idcol = "method"), feature = names(res))
-#
-#   list(res = res, data = X)
-# })
+addAlgorithm("ge", fun = function(job, instance, data) {
+  # get static stuff
+  mod = data$mod
+  feat = mod$features
+  target = getTaskDesc(mod)$target
+  generateY = data$generateY
+  measures = data$measures
+  # create test with repl seed
+  set.seed(job$repl)
+  X = as.data.frame(mvrnorm(data$n, mu = rep(0, ncol(data$sig)), Sigma = data$sig))
+  X$y = generateY(X)
+  res = ge(mod, data = X, target, measures, feat)
+  res = cbind(rbindlist(res, idcol = "method"), feature = names(res))
+
+  list(res = res, data = X)
+})
 
 addExperiments(repls = 500)
 submitJobs(ids = findNotSubmitted(), reg = reg)

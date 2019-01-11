@@ -61,15 +61,10 @@ ge = function(mod, data, target, measures, features) {
 }
 
 # function to plot PI and ICI curves
-plotPartialImportance = function(pfi, feat, learner.id = NULL, mid, individual = FALSE, rug = TRUE, hline = TRUE,
+plotPartialImportance = function(pfi, feat, mid, individual = FALSE, rug = TRUE, hline = TRUE,
   grid.points = TRUE, subset.observation.index = NULL, subset.replaced.index = NULL) {
-  if (is.null(learner.id)) {
-    d = copy(subset(pfi, features == feat))
-    by = c("replace.id", "features", "feature.value")
-  } else {
-    d = copy(subset(pfi, learner == learner.id & features == feat))
-    by = c("replace.id", "features", "learner", "feature.value")
-  }
+  d = copy(subset(pfi, features == feat))
+  by = c("replace.id", "features", "feature.value")
   if (!is.null(subset.observation.index))
     d = subset(d, row.id %in% subset.observation.index)
   if (!is.null(subset.replaced.index))
@@ -117,4 +112,25 @@ getImpTable = function(pfi, subset.ind = NULL, learner.id = "regr.randomForest",
       imp = imp[, -"learner"]
   }
   setColNames(as.data.frame(rbind(imp[[mid]])), imp$features)
+}
+
+pasteMeanSd = function(x) {
+  x.mean = mean(x)
+  if (x.mean != 0)
+    paste0(round(x.mean, 2), " (", round(sd(x), 2), ")") else
+      x.mean
+}
+
+conditionalPFI = function(pfi, var, group0, group1, group.var,
+  mid = "mse", aggregate = TRUE) {
+  by = c("replace.id", "features", "feature.value", group.var)
+  ici = subset(pfi, features == var)
+  ici[[group.var]] = as.factor(as.numeric(ici$row.id %in% group1))
+  pi = rbind(
+    subset(ici, row.id %in% group0 & replace.id %in% group0),
+    subset(ici, row.id %in% group1 & replace.id %in% group1)
+  )
+  if (aggregate)
+    pi = pi[, lapply(.SD, mean, na.rm = TRUE), .SDcols = mid, by = by]
+  return(pi)
 }
