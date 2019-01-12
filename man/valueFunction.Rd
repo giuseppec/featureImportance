@@ -31,7 +31,8 @@ Name of the target feature to be predicted.}
 
 \item{n.feat.perm}{[\code{numeric(1)}] \cr
 The number of permutations of the feature(s) used to compute the feature importance.
-The default is 50.}
+The default is 50.
+If set to NULL, the cartesian product is used.}
 
 \item{measures}{[\code{\link[mlr]{Measure}} | list of \code{\link[mlr]{Measure}} | \code{function} | list of \code{function}] \cr
 Performance measure(s) used to measure the model performance.

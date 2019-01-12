@@ -5,6 +5,7 @@
 #' @import parallelMap
 #' @import stringi
 #' @importFrom stats predict setNames var
+#' @importFrom utils type.convert
 NULL
 
 .onLoad = function(libname, pkgname) {

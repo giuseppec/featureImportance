@@ -1,6 +1,6 @@
 Package: featureImportance
 Title: Model-agnostic Feature Importance Measures
-Version: 0.0.0.9000
+Version: 0.9
 Authors@R: person("Giuseppe", "Casalicchio", email = "giuseppe.casalicchio@stat.uni-muenchen.de", role = c("aut", "cre"))
 Description: Computes several feature importance measures based on model performance.
 Depends: 
@@ -20,4 +20,4 @@ Suggests:
 License: BSD_3_clause + file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1

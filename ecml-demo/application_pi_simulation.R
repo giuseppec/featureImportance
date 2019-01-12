@@ -1,21 +1,16 @@
-library(mlr)
-library(BBmisc)
-library(data.table)
-library(ggplot2)
-library(checkmate)
-library(data.table)
-library(stringi)
-library(MASS)
+library(checkpoint)
+checkpoint("2018-06-01", project = "ecml-demo/helper", forceProject = TRUE)
+source("ecml-demo/helper/packages.R")
+install()
 library(featureImportance)
-library(batchtools)
 
 # create batchtools registry
-path = "application_pi_simulation"
+path = "ecml-demo/application_pi_simulation"
 unlink(path, recursive = TRUE)
 reg = makeExperimentRegistry(
   file.dir = path,
-  packages = c("mlr", "BBmisc", "featureImportance", "MASS", "checkmate", "stringi"),
-  source = "helper_functions.R",
+  packages = c("featureImportance"),
+  source = paste0("ecml-demo/", c("helper/functions.R", "helper/packages.R")),
   seed = 123)
 # uncomment this line to run experiments in parallel
 reg$cluster.functions = makeClusterFunctionsSocket(30)
@@ -37,11 +32,10 @@ task = makeRegrTask(data = X, target = "y")
 
 # create learners
 lrn = makeLearner("regr.randomForest", ntree = 100, importance = TRUE)
-measures = list(mse, mae, pred)
 
 # add problems
 mod = train(lrn, task)
-prob.pars = list(mod = mod, sigma = sig, n = 100, generateY = generateY, measures = measures)
+prob.pars = list(mod = mod, sigma = sig, n = 100, generateY = generateY, measures = mlr::mse)
 addProblem(name = getLearnerId(lrn), data = prob.pars, seed = 1)
 
 # add algorithms
@@ -52,7 +46,6 @@ addAlgorithm("pfi", fun = function(job, instance, data) {
   target = getTaskDesc(mod)$target
   generateY = data$generateY
   measures = data$measures
-  mid = vcapply(measures, function(x) x$id)
   # create test with repl seed
   set.seed(job$repl)
   test = as.data.frame(mvrnorm(data$n, mu = rep(0, ncol(data$sig)), Sigma = data$sig))
@@ -60,33 +53,12 @@ addAlgorithm("pfi", fun = function(job, instance, data) {
   test$y = generateY(test)
 
   pfi = lapply(feat, function(features) {
-    # measure performance on test data
-    unpermuted.perf = featureImportance:::measurePerformance.WrappedModel(mod,
-      data = test, target = target, measures = measures, local = TRUE)
-    unpermuted.perf$pred = 0
-
-    # create all permutations
-    data.perm = cartesian(test, features, target)
-    permuted.perf = featureImportance:::measurePerformance.WrappedModel(mod,
-      data = data.perm, target = target, measures = measures,
-      predict.fun = predict.fun, local = TRUE)
-    permuted.perf$row.id = data.perm$obs.id
-
-    # measure PFI by taking differences
-    pfi = lapply(split(permuted.perf, data.perm$replace.id), function(x) {
-      imp = featureImportance:::measureFeatureImportance(x, unpermuted.perf)
-    })
-
-    # join with feature values
-    pfi = lapply(1:length(pfi), function(i)
-      cbind(pfi[[i]], feature.value = test[i , features], features = features))
-    pfi = rbindlist(pfi, idcol = "replace.id")
-
-    return(pfi)
+    imp = featureImportance(mod, data = test, features = list(features),
+      target = target, measures = measures, local = TRUE, replace.ids = 1:nrow(test))
+    return(imp$importance)
   })
   pfi = setNames(pfi, feat)
   pfi = rbindlist(pfi)
-  pfi[is.na(pfi)] = 0
 
   list(res = pfi, data = test)
 })
@@ -99,11 +71,5 @@ res = reduceResultsList(findDone(), fun = function(x, job) {
   x$res
 })
 
-saveRDS(res, file = paste0(path, ".Rds"))
-
-for (i in 1:length(res)) {
-  res[[i]] = res[[i]][, mae := NULL]
-  res[[i]] = res[[i]][, pred := NULL]
-}
-
+saveRDS(mod, file = paste0(path, "_mod.Rds"))
 saveRDS(res, file = paste0(path, ".Rds"))
