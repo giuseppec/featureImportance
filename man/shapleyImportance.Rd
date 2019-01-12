@@ -5,8 +5,9 @@
 \title{Shapley Importance}
 \usage{
 shapleyImportance(object, data, features, target = NULL, local = FALSE,
-  bound.size = NULL, n.feat.perm = 50, n.shapley.perm = 120, measures,
-  predict.fun = NULL, value.function = calculateValueFunctionImportance)
+  bound.size = NULL, n.feat.perm = 50, n.shapley.perm = 120,
+  measures, predict.fun = NULL,
+  value.function = calculateValueFunctionImportance)
 }
 \arguments{
 \item{object}{[any] \cr
@@ -34,7 +35,8 @@ Bound on the permutation size to compute the Shapley value (see Cohen et al. (20
 
 \item{n.feat.perm}{[\code{numeric(1)}] \cr
 The number of permutations of the feature(s) used to compute the feature importance.
-The default is 50.}
+The default is 50.
+If set to NULL, the cartesian product is used.}
 
 \item{n.shapley.perm}{[\code{numeric(1)}] \cr
 The number of permutations that should be used for the shapley value (for computational reasons the maximum allowed value is 8192).

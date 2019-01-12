@@ -4,8 +4,8 @@
 \alias{pimp}
 \title{Permutation Importance}
 \usage{
-pimp(learner, task, resampling, measures, features = NULL, n.feat.perm = 1,
-  n.target.perm = 1)
+pimp(learner, task, resampling, measures, features = NULL,
+  n.feat.perm = 1, n.target.perm = 1)
 }
 \arguments{
 \item{learner}{[\code{\link[mlr]{Learner}}] \cr
@@ -29,7 +29,8 @@ If a list element contains two or more features, they will be permuted block-wis
 
 \item{n.feat.perm}{[\code{numeric(1)}] \cr
 The number of permutations of the feature(s) used to compute the feature importance.
-The default is 50.}
+The default is 50.
+If set to NULL, the cartesian product is used.}
 
 \item{n.target.perm}{[\code{numeric(1)}] \cr
 The number of permutations of the target used to compute a null distribution for the importance values.}

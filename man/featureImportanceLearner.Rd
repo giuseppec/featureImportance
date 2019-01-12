@@ -6,7 +6,8 @@
 \usage{
 featureImportanceLearner(learner, task, resampling,
   measures = mlr::getDefaultMeasure(task),
-  features = as.list(mlr::getTaskFeatureNames(task)), n.feat.perm = 50, ...)
+  features = as.list(mlr::getTaskFeatureNames(task)), n.feat.perm = 50,
+  ...)
 }
 \arguments{
 \item{learner}{[\code{\link[mlr]{Learner}}] \cr
@@ -30,7 +31,8 @@ If a list element contains two or more features, they will be permuted block-wis
 
 \item{n.feat.perm}{[\code{numeric(1)}] \cr
 The number of permutations of the feature(s) used to compute the feature importance.
-The default is 50.}
+The default is 50.
+If set to NULL, the cartesian product is used.}
 
 \item{...}{Not used.}
 }

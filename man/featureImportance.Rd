@@ -5,9 +5,9 @@
 \title{Feature Importance}
 \usage{
 featureImportance(object, data, features = NULL, target = NULL,
-  n.feat.perm = 50, local = FALSE, measures, predict.fun = NULL,
-  importance.fun = function(permuted, unpermuted) return(unpermuted -
-  permuted), ...)
+  n.feat.perm = 50, replace.ids = NULL, local = FALSE, measures,
+  predict.fun = NULL, importance.fun = function(permuted, unpermuted)
+  return(unpermuted - permuted), ...)
 }
 \arguments{
 \item{object}{[any] \cr
@@ -28,7 +28,13 @@ Name of the target feature to be predicted.}
 
 \item{n.feat.perm}{[\code{numeric(1)}] \cr
 The number of permutations of the feature(s) used to compute the feature importance.
-The default is 50.}
+The default is 50.
+If set to NULL, the cartesian product is used.}
+
+\item{replace.ids}{[\code{numeric}] \cr
+Vector of observation IDs from 'data'.
+If NULL then permuting the features is used to compute the importance, otherwise the feature values of the IDs are used.
+Default is NULL.}
 
 \item{local}{[\code{logical(1)}] \cr
 Should the performance (or the feature importance) be computed observation-wise?
