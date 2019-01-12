@@ -27,9 +27,7 @@ library(ggplot2)
 library(gridExtra)
 library(ggExtra)
 library(xtable)
-library(BBmisc)
 library(knitr)
-library(mlr)
 source("helper/functions.R")
 ```
 
@@ -44,14 +42,16 @@ imp.global = rbindlist(lapply(res, function(x) {
   getImpTable(x, mid = "mse", sort = FALSE)
 }))
 
-imp1 = rbindlist(lapply(res, function(x) {
-  remove0 = unique(x$replace.id[x$features == "V3" & x$feature.value == 0])
-  getImpTable(x, subset.ind = remove0, mid = "mse", sort = FALSE)
+# compute conditional PFI based on feature V3 = 0
+imp0 = rbindlist(lapply(res, function(x) {
+  use0 = x[features == "V3" & feature.value == 0, unique(replace.id)]
+  getImpTable(x, obs.id = use0, mid = "mse", sort = FALSE)
 }))
 
-imp0 = rbindlist(lapply(res, function(x) {
-  remove1 = unique(x$replace.id[x$features == "V3" & x$feature.value == 1])
-  getImpTable(x, subset.ind = remove1, mid = "mse", sort = FALSE)
+# compute conditional PFI based on feature V3 = 1
+imp1 = rbindlist(lapply(res, function(x) {
+  use1 = x[features == "V3" & feature.value == 1, unique(replace.id)]
+  getImpTable(x, obs.id = use1, mid = "mse", sort = FALSE)
 }))
 
 tab = rbind(
@@ -73,41 +73,25 @@ mid = "mse"
 pfi = res[[1]]
 
 # Get index of observations for V3 = 0 and V3 = 1
-bin0 = subset(pfi, features == "V3" & feature.value == 0)
-bin0 = unique(bin0$replace.id)
-bin1 = subset(pfi, features == "V3" & feature.value == 1)
-bin1 = unique(bin1$replace.id)
+use0 = pfi[features == "V3" & feature.value == 0, unique(replace.id)]
+use1 = pfi[features == "V3" & feature.value == 1, unique(replace.id)]
 
-var = "V1"
-pi = conditionalPFI(pfi, var, bin0, bin1, group.var = "V3")
-ici = subset(pfi, features == var)
-ici$V3 = as.factor(as.numeric(ici$row.id %in% bin1))
-
-iciV1 = plotPartialImportance(pfi, feat = var,
-  mid = mid, individual = FALSE, hline = FALSE, rug = FALSE) +
-  xlab(var)
-iciV1 = iciV1 + 
-  geom_line(data = pi, aes_string(x = "feature.value", y = mid, color = "V3")) +
-  geom_point(data = pi, aes_string(x = "feature.value", y = mid, color = "V3")) +
-  labs(y = bquote(Delta~L ~ "based on" ~ .(toupper(mid))), x = bquote(X[1]), color = bquote(X[3])) +
-  ylim(c(-10, 300))
-
-var = "V2"
-pi = conditionalPFI(pfi, var, bin0, bin1, group.var = "V3")
-ici = subset(pfi, features == var)
-ici$V3 = as.factor(as.numeric(ici$row.id %in% bin1))
-
-iciV2 = plotPartialImportance(pfi, feat = var,
-  mid = mid, individual = FALSE, hline = FALSE, rug = FALSE) +
-  xlab(var)
-
-iciV2 = iciV2 + 
-  geom_line(data = pi, aes_string(x = "feature.value", y = mid, color = "V3")) +
-  geom_point(data = pi, aes_string(x = "feature.value", y = mid, color = "V3")) +
-  labs(y = bquote(Delta~L ~ "based on" ~ .(toupper(mid))), x = bquote(X[2]), color = bquote(X[3])) +
-  ylim(c(-10, 300))
-
-gridExtra::grid.arrange(iciV1, iciV2, nrow = 1)
+vars = c("V1", "V2")
+ici = lapply(vars, function(var) {
+  pi = conditionalPFI(pfi, var, use0, use1, group.var = "V3")
+  ici = subset(pfi, features == var)
+  ici$V3 = as.factor(as.numeric(ici$row.id %in% use1))
+  feat.index = gsub("[[:alpha:]]", "", var)
+  
+  plotPartialImportance(pfi, feat = var,
+    mid = mid, individual = FALSE, hline = FALSE, rug = FALSE) +
+    geom_line(data = pi, aes_string(x = "feature.value", y = mid, color = "V3")) +
+    geom_point(data = pi, aes_string(x = "feature.value", y = mid, color = "V3")) +
+    labs(y = bquote(Delta~L ~ "based on" ~ .(toupper(mid))), 
+      x = bquote(X[.(feat.index)]), 
+      color = bquote(X[3])) + ylim(c(-10, 300))
+})
+gridExtra::marrangeGrob(ici, nrow = 1, ncol = 2)
 ```
 
 ![PI curves of \(X_1\) and \(X_2\) calculated using all observations
@@ -121,61 +105,49 @@ curves.](application_results_files/figure-gfm/conditional-1.png)
 
 ``` r
 ### Plot Example
-res.ex = readRDS("application_shapley_simulation.Rds")
+shap = readRDS("application_shapley_simulation.Rds")
+shap$learner = factor(gsub("regr.", "", shap$learner))
+
 # select one single run of the simulation with 500 repetitions to plot the example
-res.ex = subset(res.ex, repl == 2 & method %in% c("shapley", "geP"), select = c("learner", "feature", "mse", "method"))
-# specify colour and legend text
+res.ex = subset(shap, repl == 2 & method %in% c("shapley", "geP"))
+# reorder features for plotting
 feat.order = c("V3", "V2", "V1", "geP")
+res.ex$feature = factor(res.ex$feature, levels = feat.order)
+# change sign
+res.ex[, mse := round(ifelse(method == "geP", mse, -mse), 2)]
+# add column containing proportion of explained importance
+res.ex[, perc := ifelse(feature == "geP", NA, mse/sum(mse[feature != "geP"])), by = "learner"]
+# add column containing drop in MSE + proportion of explained importance
+res.ex[, label := ifelse(feature == "geP", mse, paste0(mse, " (", round(perc*100, 0), "%)"))]
+
 col = c(gray.colors(3, start = 0.5, end = .9), hcl(h = 195, l = 65, c = 100))
 col = setNames(col, feat.order)
-legend.lab = c(
-  "V1" = bquote(phi[1]),
-  "V2" = bquote(phi[2]),
-  "V3" = bquote(phi[3]),
-  "geP" = bquote(widehat(GE)[P])
-)
-# change sign
-res.ex[, mse := ifelse(method != "geP", -mse, mse)]
-# reorder features for plotting
-res.ex$feature = factor(res.ex$feature, levels = feat.order)
-# shorten string for learner
-res.ex$learner = factor(gsub("regr.", "", res.ex$learner))
-# add column containing proportion of explained importance
-res.ex[, perc := ifelse(feature == "geP", NA, mse[feature != "geP"]/sum(mse[feature != "geP"])*100), by = c("learner")]
-# add column containing drop in MSE + proportion of explained importance
-res.ex[, label := ifelse(feature == "geP", round(mse, 2), paste0(round(mse, 2), " (", round(perc, 0), "%)"))]
-
-plot.ex = ggplot(res.ex, aes(x = learner, y = mse, fill = feature))
-plot.ex = plot.ex + geom_bar(stat = "identity", colour = "white", pos = "stack") + coord_flip()
-plot.ex = plot.ex + geom_text(aes(label = label), position = position_stack(vjust = 0.5), size = 2.5)
-plot.ex = plot.ex +
-  ylab("performance (MSE)") +
-  xlab("") +
-  ggtitle("(a) Comparing the model performance and SFIMP values across different models") +
+legend.lab = c("V1" = bquote(phi[1]), "V2" = bquote(phi[2]), 
+  "V3" = bquote(phi[3]), "geP" = bquote(widehat(GE)[P]))
+plot.ex = ggplot(res.ex, aes(x = learner, y = mse, fill = feature)) + 
+  geom_bar(stat = "identity", colour = "white", pos = "stack") + 
+  geom_text(aes(label = label), position = position_stack(vjust = 0.5), size = 3) + 
+  coord_flip() + 
   scale_fill_manual(values = col, name = " performance \n explained by", labels = legend.lab) +
+  labs(title = "(a) Comparing the model performance and SFIMP values across different models", 
+    x = "", y = "performance (MSE)") +
   theme_minimal()
-
-
 
 ### Plot Simulation Results
-res.cleanup = readRDS("application_shapley_simulation.Rds")
 # compute ratio of the importance values w.r.t feature "V3"
-res.cleanup[, ratio := mse/mse[feature == "V3"], by = c("method", "learner", "repl")]
-res.cleanup = subset(res.cleanup, method %in% c("pfi.diff", "pfi.ratio", "shapley") & feature != "V3")
+shap = shap[, ratio := mse/mse[feature == "V3"], by = c("method", "learner", "repl")]
+shap = subset(shap, method %in% c("pfi.diff", "pfi.ratio", "shapley") & feature != "V3")
 
-lab.lrn = function(lrn) gsub("regr.", "", lrn)
 new.names = setNames(expression(X[1] / X[3], X[2] / X[3]), c("V1", "V2"))
-
-pp = ggplot(data = res.cleanup, aes(x = feature, y = ratio))
-pp = pp + geom_boxplot(aes(fill = method), lwd = 0.25, outlier.size = 0.75)
-pp = pp + facet_grid(. ~ learner, scales = "free", labeller = labeller(learner = lab.lrn))
-pp = pp +
-  scale_fill_discrete(name = "method",  labels = c("PFI (Diff.)", "PFI (Ratio)", "SFIMP"))  +
-  scale_fill_grey(start = 0.4, end = .95) +
+pp = ggplot(data = shap, aes(x = feature, y = ratio)) + 
+  geom_boxplot(aes(fill = method), lwd = 0.25, outlier.size = 0.75) + 
+  facet_grid(. ~ learner, scales = "free") +
+  scale_fill_grey(labels = c("PFI (Diff.)", "PFI (Ratio)", "SFIMP"), start = 0.4, end = .95) +
+  scale_x_discrete(labels = new.names) +
+  labs(title = "(b) Simulation with 500 repetitions", 
+    x = "Features involved to compute the ratio", y = "Value of the ratio") +
   theme_minimal()
-pp = pp + scale_x_discrete(labels = new.names) +
-  ylab("Value of the ratio") + xlab("Features involved to compute the ratio") +
-  ggtitle("(b) Simulation with 500 repetitions")
+
 grid.arrange(plot.ex, pp, heights = c(1.5, 2.5))
 ```
 
@@ -198,12 +170,12 @@ PFI.](application_results_files/figure-gfm/shapley-1.png)
 pfi = readRDS("application_importance_realdata.Rds")
 mid = "mse"
 
-# get index for LSTAT > 10 in order to remove those observations
-pi.ind = unique(pfi$replace.id[pfi$features == "LSTAT" & pfi$feature.value > 10])
+# get index for LSTAT <= 10 in order to keep those observations
+pi.ind = unique(pfi$replace.id[pfi$features == "LSTAT" & pfi$feature.value <= 10])
 # compute integral of each ICI curve and select observations with negative ICI integral
 ici = subset(pfi, features == "LSTAT")
 ici.integral = ici[, lapply(.SD, mean, na.rm = TRUE), .SDcols = mid, by = "row.id"]
-ici.ind = which(ici.integral[[mid]] <= 0)
+ici.ind = which(ici.integral[[mid]] > 0)
 
 # produce table
 imp = getImpTable(pfi)
@@ -212,11 +184,11 @@ imp.ici = getImpTable(pfi, ici.ind)
 kable(rbind(imp, imp.pi, imp.ici))
 ```
 
-| LSTAT |   RM | NOX | DIS | CRIM | PTRATIO | AGE | INDUS | TAX | RAD |   B |  ZN | CHAS |
-| ----: | ---: | --: | --: | ---: | ------: | --: | ----: | --: | --: | --: | --: | ---: |
-|  32.0 | 15.6 | 3.9 | 2.7 |  2.6 |     2.2 | 1.2 |   1.0 | 1.0 | 0.8 | 0.8 | 0.1 |  0.1 |
-|  10.4 | 29.6 | 1.5 | 3.3 |  0.8 |     2.3 | 0.8 |   0.5 | 1.2 | 1.1 | 0.6 | 0.2 |  0.2 |
-|  35.3 | 17.0 | 4.3 | 2.4 |  2.5 |     2.5 | 1.1 |   1.2 | 0.8 | 0.9 | 0.8 | 0.1 |  0.1 |
+| LSTAT |   RM | NOX | DIS | CRIM | PTRATIO | AGE | TAX | INDUS | RAD |   B | CHAS |  ZN |
+| ----: | ---: | --: | --: | ---: | ------: | --: | --: | ----: | --: | --: | ---: | --: |
+|  32.0 | 15.6 | 3.9 | 2.7 |  2.6 |     2.2 | 1.2 | 1.0 |   1.0 | 0.8 | 0.8 |  0.1 | 0.1 |
+|  10.4 | 29.6 | 1.5 | 3.3 |  0.8 |     2.3 | 0.8 | 1.2 |   0.5 | 1.1 | 0.6 |  0.2 | 0.2 |
+|  35.3 | 17.0 | 4.3 | 2.4 |  2.5 |     2.5 | 1.1 | 0.8 |   1.2 | 0.9 | 0.8 |  0.1 | 0.1 |
 
 ## Produce PI and ICI plots
 
@@ -229,32 +201,24 @@ pp = lapply(features, function(feat) {
   ici.integral = ici[, lapply(.SD, mean, na.rm = TRUE), .SDcols = mid, by = "row.id"]
   ind = c(which.min(ici.integral[[mid]]), which.max(ici.integral[[mid]]))
   ici.obs = subset(ici, row.id %in% ici.integral$row.id[ind])
-
+  ylab = bquote(Delta~L ~ "based on" ~ .(toupper(mid)))
+  
   # PI plot
-  pi.plot = plotPartialImportance(pfi, feat, mid, rug = FALSE)
-  pi.plot = pi.plot +
-      labs(title = "PI plot", y = bquote(Delta~L ~ "based on" ~ .(toupper(mid)))) +
-      xlab(feat) +
-      theme(legend.position = "none", title = element_text(size = 8), axis.title = element_text(size = 8))
+  pi.plot = plotPartialImportance(pfi, feat, mid, rug = FALSE) +
+      labs(title = "PI plot", y = ylab, x = feat) +
+      theme_minimal() + theme(legend.position = "none")
   
   # ICI plot
   ici.plot = plotPartialImportance(pfi, feat, mid,
-    individual = TRUE, grid.points = FALSE, rug = FALSE, hline = FALSE)
-  ici.plot = ici.plot +
+    individual = TRUE, grid.points = FALSE, rug = FALSE, hline = FALSE) +
     geom_line(data = ici.obs, aes_string(x = "feature.value", y = mid, color = "factor(row.id)", group = "row.id")) +
-    labs(title = "ICI plot", y = bquote(Delta~L ~ "based on" ~ .(toupper(mid)))) +
-    xlab(feat) +
-    theme(legend.position = "none", title = element_text(size = 8), axis.title = element_text(size = 8))
+    labs(title = "ICI plot", y = ylab, x = feat) +
+    theme_minimal() + theme(legend.position = "none")
   
-  list(
-    ggMarginal(pi.plot, type = "histogram", fill = "transparent", margins = "x"),
-    ici.plot
-    #ggMarginal(ici.plot, type = "histogram", fill = "transparent", margins = "y")
-  )
+  list(ggMarginal(pi.plot, type = "histogram", fill = "transparent", margins = "x"), ici.plot)
 })
 pp = unlist(pp, recursive = FALSE)
-
-do.call(grid.arrange, pp[c(1,3,2,4)])
+gridExtra::marrangeGrob(pp, nrow = 2, ncol = 2)
 ```
 
 ![PI and ICI plots for a random forest and the two most important

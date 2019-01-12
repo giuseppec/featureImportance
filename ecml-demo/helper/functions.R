@@ -89,29 +89,14 @@ plotPartialImportance = function(pfi, feat, mid, individual = FALSE, rug = TRUE,
 }
 
 # function for recomputing the feature importance after removing observations indexed by subset.ind
-getImpTable = function(pfi, subset.ind = NULL, learner.id = "regr.randomForest", mid = "mse", sort = TRUE) {
-  if (!is.null(subset.ind))
-    pfi = subset(pfi, row.id %nin% subset.ind & replace.id %nin% subset.ind)
-  lcol = "learner" %in% colnames(pfi)
-  if (lcol) {
-    by = c("features", "learner")
-  } else {
-    by = "features"
-  }
-
-  imp = pfi[, lapply(.SD, mean, na.rm = TRUE), .SDcols = mid, by = by]
-  if (lcol)
-    imp = split(imp, imp$learner)[[learner.id]]
-  imp[[mid]] = round(imp[[mid]], 1)
-  if (sort) {
-    if (lcol)
-      imp = sortByCol(imp[, -"learner"], mid, asc = FALSE) else
-        imp = sortByCol(imp, mid, asc = FALSE)
-  } else {
-    if (lcol)
-      imp = imp[, -"learner"]
-  }
-  setColNames(as.data.frame(rbind(imp[[mid]])), imp$features)
+getImpTable = function(pfi, obs.id = NULL, mid = "mse", sort = TRUE) {
+  if (!is.null(obs.id))
+    pfi = subset(pfi, row.id %in% obs.id & replace.id %in% obs.id)
+  imp = pfi[, lapply(.SD, mean, na.rm = TRUE), .SDcols = mid, by = "features"]
+  if (sort)
+    imp = imp[order(get(mid), decreasing = TRUE)]
+  ret = round(transpose(imp[, -"features"]), 1)
+  setnames(ret, names(ret), imp$features)
 }
 
 pasteMeanSd = function(x) {
