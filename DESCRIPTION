@@ -1,8 +1,8 @@
 Package: featureImportance
-Title: Model-agnostic Feature Importance Measures
+Title: Model-agnostic feature importance with the R package mlr
 Version: 0.9
 Authors@R: person("Giuseppe", "Casalicchio", email = "giuseppe.casalicchio@stat.uni-muenchen.de", role = c("aut", "cre"))
-Description: Computes several feature importance measures based on model performance.
+Description: Computes several feature importance measures based on model performance with the mlr package.
 Depends: 
     R (>= 3.0.2),
     mlr (>= 2.11),    

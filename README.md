@@ -1,16 +1,24 @@
 
-Reproducible results of our article entitled "Visualizing the Feature Importance for Black Box Models"
-======================================================================================================
+# `featureImportance`: Model-agnostic permutation feature importance with the R package [`mlr`](https://github.com/mlr-org/mlr)
 
-A description of the results from the application section of our article entitled "Visualizing the Feature Importance for Black Box Models" can be found [here](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_results.md).
+[![CRAN Status
+Badge](http://www.r-pkg.org/badges/version/featureImportance)](http://cran.r-project.org/web/packages/featureImportance)
+[![CRAN
+Downloads](http://cranlogs.r-pkg.org/badges/featureImportance)](http://cran.rstudio.com/web/packages/featureImportance/index.html)
+[![Build
+Status](https://travis-ci.org/giuseppec/featureImportance.svg?branch=master)](https://travis-ci.org/giuseppec/featureImportance)
+[![codecov](https://codecov.io/gh/giuseppec/featureImportance/branch/master/graph/badge.svg?token=2w8ISxXGMc)](https://codecov.io/gh/giuseppec/featureImportance)
 
-featureImportance
-=================
+## Reproducible results of the article [“Visualizing the Feature Importance for Black Box Models”](https://arxiv.org/abs/1804.06620)
 
-[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) [![CRAN Status Badge](http://www.r-pkg.org/badges/version/featureImportance)](http://cran.r-project.org/web/packages/featureImportance) [![CRAN Downloads](http://cranlogs.r-pkg.org/badges/featureImportance)](http://cran.rstudio.com/web/packages/featureImportance/index.html) [![Build Status](https://travis-ci.org/giuseppec/featureImportance.svg?branch=master)](https://travis-ci.org/giuseppec/featureImportance) [![codecov](https://codecov.io/gh/giuseppec/featureImportance/branch/master/graph/badge.svg?token=2w8ISxXGMc)](https://codecov.io/gh/giuseppec/featureImportance)
+This R package was developed as a part of the article [“Visualizing the
+Feature Importance for Black Box
+Models”](https://arxiv.org/abs/1804.06620) accepted at the ECML-PKDD
+2018 conference track. The results of the application section of this
+article can be reproduced with the code provided
+[here](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_results.md).
 
-Installation of the package
-===========================
+## Installation of the package
 
 Install the development version from GitHub (using `devtools`)
 
@@ -19,8 +27,22 @@ install.packages("devtools")
 devtools::install_github("giuseppec/featureImportance")
 ```
 
-Simple Usecase
-==============
+## Introduction
+
+The `featureImportance` package is an extension for the
+[`mlr`](https://github.com/mlr-org/mlr) package and allows to compute
+the permutation feature importance in a model-agnostic manner. The focus
+is on performance-based feature importance measures:
+
+  - **Model reliance** and **algorithm reliance**, which is a
+    model-agnostic version of [breiman’s permutation
+    importance](https://www.stat.berkeley.edu/~breiman/randomforest2001.pdf)
+    introduced in the article
+    [arXiv:1801.01489v3](https://arxiv.org/abs/1801.01489).
+  - **SFIMP** (Shapley Feature Importance)
+  - PIMP
+
+## Simple Usecase
 
 ``` r
 library(mlr)
@@ -45,7 +67,7 @@ str(PimaIndiansDiabetes)
     ##  $ diabetes: Factor w/ 2 levels "neg","pos": 2 1 2 1 2 1 2 1 2 2 ...
 
 ``` r
-# Make classification task from data
+# Make mlr classification task from data
 pid.task = makeClassifTask(data = PimaIndiansDiabetes, target = "diabetes")
 pid.task
 ```
@@ -69,18 +91,7 @@ pid.task
 ``` r
 # Choose machine learning algorithm 
 lrn = makeLearner("classif.randomForest", ntree = 100)
-lrn
-```
 
-    ## Learner classif.randomForest from package randomForest
-    ## Type: classif
-    ## Name: Random Forest; Short name: rf
-    ## Class: classif.randomForest
-    ## Properties: twoclass,multiclass,numerics,factors,ordered,prob,class.weights,oobpreds,featimp
-    ## Predict-Type: response
-    ## Hyperparameters: ntree=100
-
-``` r
 # Create indices for train and test data
 n = getTaskSize(pid.task)
 train.ind = sample(n, size = 0.6*n)
@@ -91,21 +102,22 @@ mod = train(lrn, pid.task, subset = train.ind)
 
 # Measure feature importance on test data
 test = getTaskData(pid.task, subset = train.ind)
-featureImportance(mod, data = test)
+imp = featureImportance(mod, data = test)
+imp
 ```
 
     ## $importance
     ##      n.feat.perm features       mmce
     ##   1:           1 pregnant 0.02608696
-    ##   2:           1  glucose 0.21086957
-    ##   3:           1 pressure 0.03260870
-    ##   4:           1  triceps 0.02173913
-    ##   5:           1  insulin 0.01956522
+    ##   2:           1  glucose 0.20869565
+    ##   3:           1 pressure 0.01304348
+    ##   4:           1  triceps 0.01956522
+    ##   5:           1  insulin 0.04565217
     ##  ---                                
-    ## 396:          50  triceps 0.01521739
-    ## 397:          50  insulin 0.01956522
-    ## 398:          50     mass 0.10434783
-    ## 399:          50 pedigree 0.06956522
+    ## 396:          50  triceps 0.02608696
+    ## 397:          50  insulin 0.02608696
+    ## 398:          50     mass 0.08260870
+    ## 399:          50 pedigree 0.07391304
     ## 400:          50      age 0.06521739
     ## 
     ## $resample

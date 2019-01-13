@@ -8,19 +8,19 @@ opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 set.seed(123)
 ```
 
-# Reproducible results of our article entitled "Visualizing the Feature Importance for Black Box Models"
+# `featureImportance`: Model-agnostic permutation feature importance with the R package [`mlr`](https://github.com/mlr-org/mlr)
 
-A description of the results from the application section of our article entitled "Visualizing the Feature Importance for Black Box Models" can be found [here](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_results.md).
-
-# featureImportance
-
-[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![CRAN Status Badge](http://www.r-pkg.org/badges/version/featureImportance)](http://cran.r-project.org/web/packages/featureImportance)
 [![CRAN Downloads](http://cranlogs.r-pkg.org/badges/featureImportance)](http://cran.rstudio.com/web/packages/featureImportance/index.html)
 [![Build Status](https://travis-ci.org/giuseppec/featureImportance.svg?branch=master)](https://travis-ci.org/giuseppec/featureImportance)
 [![codecov](https://codecov.io/gh/giuseppec/featureImportance/branch/master/graph/badge.svg?token=2w8ISxXGMc)](https://codecov.io/gh/giuseppec/featureImportance)
 
-# Installation of the package
+## Reproducible results of the article ["Visualizing the Feature Importance for Black Box Models"](https://arxiv.org/abs/1804.06620)
+
+This R package was developed as a part of the article ["Visualizing the Feature Importance for Black Box Models"](https://arxiv.org/abs/1804.06620) accepted at the ECML-PKDD 2018 conference track.
+The results of the application section of this article can be reproduced with the code provided [here](https://github.com/giuseppec/featureImportance/blob/master/ecml-demo/application_results.md).
+
+## Installation of the package
 
 Install the development version from GitHub (using `devtools`)
 
@@ -29,7 +29,16 @@ install.packages("devtools")
 devtools::install_github("giuseppec/featureImportance")
 ```
 
-# Simple Usecase
+## Introduction
+
+The `featureImportance` package is an extension for the [`mlr`](https://github.com/mlr-org/mlr) package and allows to compute the permutation feature importance in a model-agnostic manner.
+The focus is on performance-based feature importance measures:
+
+- **Model reliance** and **algorithm reliance**, which is a model-agnostic version of [breiman's permutation importance](https://www.stat.berkeley.edu/~breiman/randomforest2001.pdf) introduced in the article [arXiv:1801.01489v3](https://arxiv.org/abs/1801.01489).
+- **SFIMP** (Shapley Feature Importance)
+- PIMP
+
+## Simple Usecase
 
 ```{r}
 library(mlr)
@@ -41,13 +50,12 @@ set.seed(2018)
 data(PimaIndiansDiabetes, package = "mlbench")
 str(PimaIndiansDiabetes)
 
-# Make classification task from data
+# Make mlr classification task from data
 pid.task = makeClassifTask(data = PimaIndiansDiabetes, target = "diabetes")
 pid.task
 
 # Choose machine learning algorithm 
 lrn = makeLearner("classif.randomForest", ntree = 100)
-lrn
 
 # Create indices for train and test data
 n = getTaskSize(pid.task)
@@ -59,5 +67,6 @@ mod = train(lrn, pid.task, subset = train.ind)
 
 # Measure feature importance on test data
 test = getTaskData(pid.task, subset = train.ind)
-featureImportance(mod, data = test)
+imp = featureImportance(mod, data = test)
+imp
 ```
