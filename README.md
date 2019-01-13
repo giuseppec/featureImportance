@@ -1,5 +1,5 @@
 
-# `featureImportance`: Model-agnostic permutation feature importance with the R package [`mlr`](https://github.com/mlr-org/mlr)
+# featureImportance: Model-agnostic permutation feature importance with the [`mlr`](https://github.com/mlr-org/mlr) package
 
 [![CRAN Status
 Badge](http://www.r-pkg.org/badges/version/featureImportance)](http://cran.r-project.org/web/packages/featureImportance)
@@ -9,7 +9,7 @@ Downloads](http://cranlogs.r-pkg.org/badges/featureImportance)](http://cran.rstu
 Status](https://travis-ci.org/giuseppec/featureImportance.svg?branch=master)](https://travis-ci.org/giuseppec/featureImportance)
 [![codecov](https://codecov.io/gh/giuseppec/featureImportance/branch/master/graph/badge.svg?token=2w8ISxXGMc)](https://codecov.io/gh/giuseppec/featureImportance)
 
-## Reproducible results of the article [“Visualizing the Feature Importance for Black Box Models”](https://arxiv.org/abs/1804.06620)
+## Results of the article [“Visualizing the Feature Importance for Black Box Models”](https://arxiv.org/abs/1804.06620)
 
 This R package was developed as a part of the article [“Visualizing the
 Feature Importance for Black Box
@@ -42,7 +42,7 @@ is on performance-based feature importance measures:
   - **SFIMP** (Shapley Feature Importance)
   - PIMP
 
-## Simple Usecase
+## Simple usecase
 
 ``` r
 library(mlr)
