@@ -140,7 +140,7 @@ pfi = readRDS("application_importance_realdata.Rds")
 
 # get index for LSTAT <= 10 in order to keep those observations
 pi.ind = unique(pfi[features == "LSTAT" & feature.value <= 10, replace.id])
-# compute integral of each ICI curve and select observations with negative ICI integral
+# compute integral of each ICI curve and select observations with positive ICI integral
 ici = subset(pfi, features == "LSTAT")
 ici.area = ici[, lapply(.SD, mean, na.rm = TRUE), .SDcols = "mse", by = "row.id"]
 ici.ind = which(ici.area$mse > 0)
