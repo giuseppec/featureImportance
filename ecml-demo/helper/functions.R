@@ -60,23 +60,6 @@ ge = function(mod, data, target, measures, features) {
   list(geP = geP, ge0 = ge0)
 }
 
-# function to plot PI and ICI curves
-plotImportance = function(pfi, feat, mid, individual = FALSE, hline = TRUE, grid.points = TRUE) {
-  d = copy(subset(pfi, features %in% feat))
-  by = c("replace.id", "features", "feature.value")
-  pi = d[, lapply(.SD, mean, na.rm = TRUE), .SDcols = mid, by = by]
-
-  pp = ggplot(data = pi, aes_string(x = "feature.value", y = mid))
-  if (grid.points)
-    pp = pp + geom_point()
-  if (individual)
-    pp = pp + geom_point(shape = NA) + geom_line(data = d,
-      aes_string(x = "feature.value", y = mid, group = "row.id"), color = "gray")
-  if (hline)
-    pp = pp + geom_hline(yintercept = mean(pi[[mid]]))
-  pp + geom_line()
-}
-
 # function for recomputing the feature importance after removing observations indexed by subset.ind
 getImpTable = function(pfi, obs.id = NULL, mid = "mse", sort = TRUE) {
   if (!is.null(obs.id))

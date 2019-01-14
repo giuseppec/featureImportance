@@ -66,7 +66,7 @@ test.ind = setdiff(1:n, train.ind)
 mod = train(lrn, pid.task, subset = train.ind)
 
 # Measure feature importance on test data
-test = getTaskData(pid.task, subset = train.ind)
+test = getTaskData(pid.task, test.ind)
 imp = featureImportance(mod, data = test)
 imp
 ```
