@@ -54,12 +54,11 @@ measurePerformance.WrappedModel = function(object, data, target = NULL,
 
   p = predict(object, newdata = data)
 
-  if (local) {
-    # FIXME: not all measures can handle "local" importance, e.g. auc does not work.
-    # We should capture this here.
+  if (local) { # Doing this is slower: p = predict(object, newdata = data, subset = i)
+    # FIXME: not all measures can handle "local" importance, e.g. auc does not work. We should capture this here.
     p2 = splitPrediction(p, BBmisc::seq_row(p$data))
+    # FIXME: this is horribly slow as we iterate over each obs. a vectorized alternative would be better
     perf = lapply(seq_along(p2), function(i) {
-      # this is slower: p = predict(object, newdata = data, subset = i)
       mlr::performance(p2[[i]], measures)
     })
     cn = names(perf[[1]])

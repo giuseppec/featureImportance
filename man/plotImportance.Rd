@@ -9,22 +9,22 @@ plotImportance(importance, feature, mid, individual = FALSE,
 }
 \arguments{
 \item{importance}{[\code{featureImportance | data.frame}] \cr
-Object of class \code{featureImportance} or a \code{data.frame} containing the same information as the result of \code{featureImportance} from its \code{$importance} slot.}
+Object of class \code{featureImportance} or a \code{data.frame} containing the same information as the result of the \code{featureImportance}'s \code{$importance} slot.}
 
 \item{feature}{[\code{character(1)}] \cr
-The feature(s) for which the shapley importance should be computed.}
+The feature for which the PI or ICI curves should be visualized.}
 
-\item{bound.size}{[\code{numeric(1)}] \cr
-Bound on the permutation size to compute the Shapley value (see Cohen et al. (2007)).}
+\item{mid}{[\code{character(1)}] \cr
+The measure name used for computing the feature importance.}
 
-\item{n.shapley.perm}{[\code{numeric(1)}] \cr
-The number of permutations that should be used for the shapley value (for computational reasons the maximum allowed value is 8192).
-If \code{n.shapley.perm} >= number of all unique permutatios, all unique permutations will be used.
-Use \code{n.shapley.perm = NULL} to use all unique permutations (or the maximum allowed value of 8192)
-Default is 120.}
+\item{individual}{[\code{logical(1)}] \cr
+If \code{TRUE}, the ICI curves are additionally plotted. Otherwise only the PI curve is plotted.}
 
-\item{value.function}{[\code{function}] \cr
-Function that defines the value function which is used to compute the shapley value.}
+\item{hline}{[\code{logical(1)}] \cr
+Whether a horizontal line should be plotted whose y-position refers to the feature importance of the considered feature.}
+
+\item{grid.points}{[\code{logical(1)}] \cr
+Whether points should be plotted whose x-position refer to the feature values used to compute the curves.}
 }
 \description{
 Allows to visualize the PI or ICI curves.
