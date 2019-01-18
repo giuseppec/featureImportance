@@ -16,7 +16,8 @@ permuteFeature = function(data, features) {
   size = nrow(data)
   replace.id = sample.int(size)
   data[, features] = data[replace.id, features]
-  return(list(data = data, replace.id = replace.id))
+  attr(data, "replace.id") = replace.id
+  return(data)
 }
 
 replaceFeature = function(data, features, replace.id = NULL) {
