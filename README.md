@@ -101,24 +101,24 @@ test.ind = setdiff(1:n, train.ind)
 mod = train(lrn, pid.task, subset = train.ind)
 
 # Measure feature importance on test data
-test = getTaskData(pid.task, subset = train.ind)
+test = getTaskData(pid.task, test.ind)
 imp = featureImportance(mod, data = test)
 imp
 ```
 
     ## $importance
-    ##      n.feat.perm features       mmce
-    ##   1:           1 pregnant 0.02608696
-    ##   2:           1  glucose 0.20869565
-    ##   3:           1 pressure 0.01304348
-    ##   4:           1  triceps 0.01956522
-    ##   5:           1  insulin 0.04565217
-    ##  ---                                
-    ## 396:          50  triceps 0.02608696
-    ## 397:          50  insulin 0.02608696
-    ## 398:          50     mass 0.08260870
-    ## 399:          50 pedigree 0.07391304
-    ## 400:          50      age 0.06521739
+    ##      n.feat.perm features         mmce
+    ##   1:           1 pregnant  0.009740260
+    ##   2:           1  glucose  0.120129870
+    ##   3:           1 pressure  0.000000000
+    ##   4:           1  triceps -0.006493506
+    ##   5:           1  insulin -0.003246753
+    ##  ---                                  
+    ## 396:          50  triceps -0.006493506
+    ## 397:          50  insulin -0.003246753
+    ## 398:          50     mass  0.025974026
+    ## 399:          50 pedigree  0.009740260
+    ## 400:          50      age  0.022727273
     ## 
     ## $resample
     ## NULL

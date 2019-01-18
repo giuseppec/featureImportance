@@ -28,6 +28,7 @@ library(gridExtra)
 library(ggExtra)
 library(xtable)
 library(knitr)
+library(featureImportance)
 source("helper/functions.R")
 ```
 
@@ -82,10 +83,10 @@ pi = lapply(vars, function(var) {
   ici[, V3 := as.factor(as.numeric(row.id %in% use1))]
   ind = gsub("[[:alpha:]]", "", var)
   
-  plotImportance(pfi, feat = var, mid = "mse", individual = FALSE, hline = FALSE) +
+  plotImportance(pfi, feat = var, mid = "mse", hline = FALSE) +
     geom_line(data = pi.cond, aes(color = V3)) +
     geom_point(data = pi.cond, aes(color = V3)) +
-    labs(x = bquote(X[.(ind)]), y = bquote(Delta~L ~ "based on MSE"), color = bquote(X[3])) +
+    labs(x = bquote(X[.(ind)]), color = bquote(X[3])) +
     ylim(c(-10, 300))
 })
 marrangeGrob(pi, nrow = 1, ncol = 2)
@@ -167,7 +168,7 @@ pfi = readRDS("application_importance_realdata.Rds")
 
 # get index for LSTAT <= 10 in order to keep those observations
 pi.ind = unique(pfi[features == "LSTAT" & feature.value <= 10, replace.id])
-# compute integral of each ICI curve and select observations with negative ICI integral
+# compute integral of each ICI curve and select observations with positive ICI integral
 ici = subset(pfi, features == "LSTAT")
 ici.area = ici[, lapply(.SD, mean, na.rm = TRUE), .SDcols = "mse", by = "row.id"]
 ici.ind = which(ici.area$mse > 0)
@@ -195,17 +196,13 @@ pp = lapply(features, function(feat) {
   ici.area = ici[, lapply(.SD, mean, na.rm = TRUE), .SDcols = "mse", by = "row.id"]
   ind = c(which.min(ici.area$mse), which.max(ici.area$mse))
   ici.obs = subset(ici, row.id %in% ici.area$row.id[ind])
-  ylab = bquote(Delta~L ~ "based on MSE")
   
   # PI plot
-  pi.plot = plotImportance(pfi, feat, "mse") +
-    labs(title = "PI plot", x = feat, y = ylab) + 
-    theme(legend.position = "none")
+  pi.plot = plotImportance(pfi, feat, "mse") + theme(legend.position = "none")
   
   # ICI plot
   ici.plot = plotImportance(pfi, feat, "mse", individual = TRUE, grid.points = FALSE, hline = FALSE) +
     geom_line(data = ici.obs, aes(color = factor(row.id), group = row.id)) +
-    labs(title = "ICI plot", x = feat, y = ylab) +
     theme(legend.position = "none")
   
   list(ggMarginal(pi.plot, type = "histogram", fill = "transparent", margins = "x"), ici.plot)

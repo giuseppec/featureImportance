@@ -24,6 +24,7 @@ library(gridExtra)
 library(ggExtra)
 library(xtable)
 library(knitr)
+library(featureImportance)
 source("helper/functions.R")
 ```
 
