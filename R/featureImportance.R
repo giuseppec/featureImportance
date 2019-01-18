@@ -91,24 +91,22 @@ computeFeatureImportance = function(object, data, features, target = NULL,
   unpermuted.perf = measurePerformance(object, data = data, target = target,
     measures = measures, local = local, predict.fun = predict.fun)
 
-  # build arg list
-  args = list(unpermuted.perf = unpermuted.perf, object = object, data = data,
-    features = features, target = target, measures = measures, local = local,
-    predict.fun = predict.fun, importance.fun = importance.fun)
-
   if (!is.null(replace.ids)) {
     iterate = replace.ids
-    args$method = "replace"
+    method = "replace"
     idcol = "replace.id"
   } else {
     iterate = seq_len(n.feat.perm)
-    args$method = "permute"
+    method = "permute"
     idcol = "n.feat.perm"
   }
 
-  # Parallelize over n.feat.perm
-  imp = parallelMap::parallelMap(computeFeatureImportanceIteration,
-    i = iterate, more.args = args)
+  imp = lapply(iterate, function(i) {
+    computeFeatureImportanceIteration(i = i, method = method,
+      unpermuted.perf = unpermuted.perf, object = object, data = data,
+      features = features, target = target, measures = measures, local = local,
+      predict.fun = predict.fun, importance.fun = importance.fun)
+  })
   imp = rbindlist(imp, idcol = idcol)
 
   # replace the feature column (which is a vector of id) with its corresponding feature sets
@@ -129,16 +127,21 @@ computeFeatureImportanceIteration = function(i, method, features, unpermuted.per
   # compute importance for each feature
   feat.imp = lapply(features, function(feature) {
     # permute feature
-    if (method == "permute")
-      data.perm = permuteFeature(data, features = feature) else
-        data.perm = replaceFeature(data, features = feature, replace.id = i)
+    if (method == "permute") {
+      data.perm = permuteFeature(data, features = feature)
+      replace.id = attr(data.perm, "replace.id")
+    } else {
+      data.perm = replaceFeature(data, features = feature, replace.id = i)
+      replace.id = rep(i, nrow(data))
+    }
     # measure performance when feature is shuffled
     permuted.perf = measurePerformance(object, data = data.perm, target = target,
       measures = measures, local = local, predict.fun = predict.fun)
     # Compare true and shuffled performance
     ret = measureFeatureImportance(permuted.perf, unpermuted.perf, importance.fun = importance.fun)
-    if (local & method == "replace") {
+    if (local & !inherits(object, "ResampleResult")) {
       ret = cbind(ret, feature.value = type.convert(data.perm[ , feature]))
+      ret$replace.id = replace.id
     }
     return(ret)
   })

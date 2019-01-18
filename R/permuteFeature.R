@@ -14,7 +14,9 @@ permuteFeature = function(data, features) {
   }
   # dim might be faster https://statisfaction.wordpress.com/2017/12/10/nrow-references-and-copies/
   size = nrow(data)
-  data[, features] = data[sample.int(size), features]
+  replace.id = sample.int(size)
+  data[, features] = data[replace.id, features]
+  attr(data, "replace.id") = replace.id
   return(data)
 }
 
