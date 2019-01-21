@@ -9,18 +9,17 @@ test_that("featureImportance with WrappedModel works", {
       set.seed(1)
       if (m == "permute") {
         imp = featureImportance(mod, data = d, features = feat, n.feat.perm = n.feat.perm, measures = measures, local = loc)
-        col = "n.feat.perm"
       } else {
         imp = featureImportance(mod, data = d, features = feat, replace.ids = 1:2, measures = measures, local = loc)
-        col = "replace.id"
       }
       imp = imp$importance
-      nrow = length(feat)*n.feat.perm*ifelse(loc, nrow(d), 1)
       if (isTRUE(loc))
-        expect_subset("row.id", colnames(imp))
+        expect_subset(c("row.id", "replace.id"), colnames(imp))
+      nrow = length(feat)*n.feat.perm*ifelse(loc, nrow(d), 1)
+
       expect_output(print.featureImportance(imp), regexp = "Aggregated importance")
       expect_data_table(imp, nrows = nrow)
-      expect_subset(c("features", col, mid), colnames(imp))
+      expect_subset(c("features", "n.feat.perm", mid), colnames(imp))
       expect_equal(imp$acc, -imp$mmce)
       expect_equal(stri_split_fixed(unique(imp$features), ","), feat)
 

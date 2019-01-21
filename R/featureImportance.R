@@ -91,14 +91,13 @@ computeFeatureImportance = function(object, data, features, target = NULL,
   unpermuted.perf = measurePerformance(object, data = data, target = target,
     measures = measures, local = local, predict.fun = predict.fun)
 
+  idcol = "n.feat.perm"
   if (!is.null(replace.ids)) {
     iterate = replace.ids
     method = "replace"
-    idcol = "replace.id"
   } else {
     iterate = seq_len(n.feat.perm)
     method = "permute"
-    idcol = "n.feat.perm"
   }
 
   imp = lapply(iterate, function(i) {
@@ -115,6 +114,8 @@ computeFeatureImportance = function(object, data, features, target = NULL,
 
   makeS3Obj(
     classes = "featureImportance",
+    local = local,
+    method = method,
     importance = imp,
     resample = if (inherits(object, "ResampleResult")) object else NULL,
     measures = measures
@@ -129,19 +130,30 @@ computeFeatureImportanceIteration = function(i, method, features, unpermuted.per
     # permute feature
     if (method == "permute") {
       data.perm = permuteFeature(data, features = feature)
-      replace.id = attr(data.perm, "replace.id")
+      if (local)
+        replace.id = attr(data.perm, "replace.id") else
+          replace.id = list(attr(data.perm, "replace.id"))
     } else {
       data.perm = replaceFeature(data, features = feature, replace.id = i)
-      replace.id = rep(i, nrow(data))
+      if (local)
+        replace.id = rep(i, nrow(data)) else
+          replace.id = i
     }
     # measure performance when feature is shuffled
     permuted.perf = measurePerformance(object, data = data.perm, target = target,
       measures = measures, local = local, predict.fun = predict.fun)
     # Compare true and shuffled performance
     ret = measureFeatureImportance(permuted.perf, unpermuted.perf, importance.fun = importance.fun)
-    if (local & !inherits(object, "ResampleResult")) {
-      ret = cbind(ret, feature.value = type.convert(data.perm[ , feature]))
-      ret$replace.id = replace.id
+    if (!inherits(object, "ResampleResult")) {
+      if (local) {
+        feature.value = type.convert(data.perm[ , feature])
+      } else {
+        if (method == "replace.id")
+          feature.value = unique(type.convert(data.perm[ , feature])) else
+            feature.value = NULL
+      }
+      ret[["feature.value"]] = feature.value
+      ret[["replace.id"]] = replace.id
     }
     return(ret)
   })

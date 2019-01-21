@@ -19,8 +19,12 @@
 #' Whether points should be plotted whose x-position refer to the feature values used to compute the curves.
 #' @export
 plotImportance = function(importance, feature, mid, individual = FALSE, hline = TRUE, grid.points = TRUE) {
-  if (inherits(importance, "featureImportance"))
+  if (inherits(importance, "featureImportance")) {
+    local = importance$local
+    if (!local & individual)
+      stop("'individual = TRUE' not possible if no local feature importance was computed.")
     importance = importance$importance
+  }
   assertDataFrame(importance)
   assertString(feature)
   assertString(mid)
