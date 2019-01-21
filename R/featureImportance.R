@@ -127,17 +127,14 @@ computeFeatureImportanceIteration = function(i, method, features, unpermuted.per
 
   # compute importance for each feature
   feat.imp = lapply(features, function(feature) {
+
     # permute feature
     if (method == "permute") {
       data.perm = permuteFeature(data, features = feature)
-      if (local)
-        replace.id = attr(data.perm, "replace.id") else
-          replace.id = list(attr(data.perm, "replace.id"))
+      replace.id = if (local) attr(data.perm, "replace.id") else list(attr(data.perm, "replace.id"))
     } else {
       data.perm = replaceFeature(data, features = feature, replace.id = i)
-      if (local)
-        replace.id = rep(i, nrow(data)) else
-          replace.id = i
+      replace.id = if (local) rep(i, nrow(data)) else i
     }
     # measure performance when feature is shuffled
     permuted.perf = measurePerformance(object, data = data.perm, target = target,
@@ -148,9 +145,9 @@ computeFeatureImportanceIteration = function(i, method, features, unpermuted.per
       if (local) {
         feature.value = type.convert(data.perm[ , feature])
       } else {
-        if (method == "replace.id")
-          feature.value = unique(type.convert(data.perm[ , feature])) else
-            feature.value = NULL
+        if (method == "permute")
+          feature.value = NULL else
+            feature.value = unique(type.convert(data.perm[ , feature]))
       }
       ret[["feature.value"]] = feature.value
       ret[["replace.id"]] = replace.id

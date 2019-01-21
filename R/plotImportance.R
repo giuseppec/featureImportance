@@ -21,6 +21,8 @@
 plotImportance = function(importance, feature, mid, individual = FALSE, hline = TRUE, grid.points = TRUE) {
   if (inherits(importance, "featureImportance")) {
     local = importance$local
+    if (!local & importance$method == "permute")
+      stop("Local feature importance was not computed.")
     if (!local & individual)
       stop("'individual = TRUE' not possible if no local feature importance was computed.")
     importance = importance$importance
