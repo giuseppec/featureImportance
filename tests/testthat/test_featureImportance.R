@@ -17,7 +17,7 @@ test_that("featureImportance with WrappedModel works", {
         expect_subset(c("row.id", "replace.id"), colnames(imp))
       nrow = length(feat)*n.feat.perm*ifelse(loc, nrow(d), 1)
 
-      expect_output(print.featureImportance(imp), regexp = "Aggregated importance")
+      expect_output(print.featureImportance(imp), regexp = "Global feature importance")
       expect_data_table(imp, nrows = nrow)
       expect_subset(c("features", "n.feat.perm", mid), colnames(imp))
       expect_equal(imp$acc, -imp$mmce)

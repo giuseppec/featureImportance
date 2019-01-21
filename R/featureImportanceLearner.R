@@ -30,13 +30,33 @@ featureImportanceLearner = function(learner, task, resampling,
   )
 }
 
-print.featureImportance = function(x, measure.id = names(x$measures), by = NULL, ...) {
+#' @export
+print.featureImportance = function(x, measure.id = names(x$measures), digits = 2, ...) {
   # expr = parse(text = sprintf("%s := mean(%s)", measure.id, measure.id))
   # return(x$importance[, eval(expr), by = "feature"])
-  assertSubset(by, c("cv.iter", "n.feat.perm"), empty.ok = TRUE)
   catf("Object of class 'featureImportance'")
-  catf("Aggregated importance:")
-  if ("row.id" %in% colnames(x$importance))
-    by = c("row.id", by)
-  print(x$importance[, lapply(.SD, mean), .SDcols = measure.id, by = c("features", by)], ...)
+  catf(" Method for feature values:          %s", x$method)
+  catf(" Importance measure based on:        %s", collapse(names(x$measures)))
+  catf(" Contains local feature importance:  %s", ifelse(x$local, "yes", "no"))
+  catf(" Global feature importance: ")
+  res = summary(x, measure.id = names(x$measures))
+  #res = transpose(mat[, -"features"])
+  #colnames(res) = mat[["features"]]
+  print(res, digits = digits, ...)
+}
+
+#' @export
+summary.featureImportance = function(x, measure.id = names(x$measures), local = FALSE, ...) {
+  if (x$local) {
+    if ("feature.value" %in% colnames(x$importance))
+      by = "feature.value" else
+        by = NULL
+    res = x$importance[, lapply(.SD, mean), .SDcols = measure.id, by = c("features", "row.id", by)]
+  } else {
+    res = x$importance[, lapply(.SD, mean), .SDcols = measure.id, by = c("features")]
+  }
+  if (!local)
+    res = res[,  lapply(.SD, mean), .SDcols = measure.id, by = c("features")]
+
+  return(res[order(get(measure.id), decreasing = TRUE)])
 }

@@ -59,6 +59,8 @@ featureImportance.ResampleResult = function(object, data, features = NULL, targe
   # set defaults
   if (is.null(target))
     target = getTaskTargetNames(getTaskDesc(object))
+  if (is.null(features))
+    features = as.list(object$models[[1]]$features)
 
   # for each fold and each feature: permute the feature and measure performance on permuted feature
   computeFeatureImportance(object = object, data = data, features = features, target = target,

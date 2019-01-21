@@ -38,7 +38,9 @@ The focus is on performance-based feature importance measures:
 - **SFIMP** (Shapley Feature Importance)
 - PIMP
 
-## Simple usecase
+## Use case: Compute importance based on test data
+
+This use case computes the feature importance of a model based on a single test data set.
 
 ```{r}
 library(mlr)
@@ -46,27 +48,50 @@ library(mlbench)
 library(featureImportance)
 set.seed(2018)
 
-# Look at the data
-data(PimaIndiansDiabetes, package = "mlbench")
-str(PimaIndiansDiabetes)
+# Get boston housing data and look at the data
+data(BostonHousing, package = "mlbench")
+str(BostonHousing)
 
-# Make mlr classification task from data
-pid.task = makeClassifTask(data = PimaIndiansDiabetes, target = "diabetes")
-pid.task
+# Create regression task for mlr
+boston.task = makeRegrTask(data = BostonHousing, target = "medv")
+boston.task
 
-# Choose machine learning algorithm 
-lrn = makeLearner("classif.randomForest", ntree = 100)
+# Specify the machine learning algorithm with the mlr package
+lrn = makeLearner("regr.randomForest", ntree = 100)
 
 # Create indices for train and test data
-n = getTaskSize(pid.task)
+n = getTaskSize(boston.task)
 train.ind = sample(n, size = 0.6*n)
 test.ind = setdiff(1:n, train.ind)
 
 # Fit model on train data
-mod = train(lrn, pid.task, subset = train.ind)
+mod = train(lrn, boston.task, subset = train.ind)
+
+# Use feature values of randomly chosen observations from test data to plot the importance curves
+test = getTaskData(boston.task, subset = test.ind)
+obs.id = sample(1:nrow(test), 5)
 
 # Measure feature importance on test data
-test = getTaskData(pid.task, test.ind)
-imp = featureImportance(mod, data = test)
-imp
+imp = featureImportance(mod, data = test, replace.ids = obs.id, local = TRUE)
+summary(imp)
+
+# Plot PI curve
+plotImportance(imp, feat = "lstat", mid = "mse", individual = FALSE, hline = TRUE)
+
+# Plot ICI curves
+plotImportance(imp, feat = "lstat", mid = "mse", individual = TRUE, hline = FALSE)
 ```
+
+## Use case: Compute importance using a resampling technique
+
+Instead of computing the feature importance of a model by using a single test data set, one can repeat this process by embedding the feature importance calculation within a resampling procedure.
+The resampling procedure creates multiple models using different training sets, and the corresponding test sets can be used to calculate the feature importance.
+For example, using 5-fold cross-validation results in 5 different models, one for each cross-validation fold.
+
+```{r}
+rdesc = makeResampleDesc("CV", iter = 5)
+res = resample(lrn, boston.task, resampling = rdesc, models = TRUE)
+imp = featureImportance(res, data = getTaskData(boston.task), n.feat.perm = 10)
+summary(imp)
+```
+
