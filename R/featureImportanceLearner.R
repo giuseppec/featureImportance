@@ -46,14 +46,14 @@ print.featureImportance = function(x, measure.id = names(x$measures), digits = 2
 }
 
 #' @export
-summary.featureImportance = function(x, measure.id = names(x$measures), local = FALSE, ...) {
-  if (x$local) {
-    if ("feature.value" %in% colnames(x$importance))
+summary.featureImportance = function(object, measure.id = names(object$measures), local = FALSE, ...) {
+  if (object$local) {
+    if ("feature.value" %in% colnames(object$importance))
       by = "feature.value" else
         by = NULL
-    res = x$importance[, lapply(.SD, mean), .SDcols = measure.id, by = c("features", "row.id", by)]
+    res = object$importance[, lapply(.SD, mean), .SDcols = measure.id, by = c("features", "row.id", by)]
   } else {
-    res = x$importance[, lapply(.SD, mean), .SDcols = measure.id, by = c("features")]
+    res = object$importance[, lapply(.SD, mean), .SDcols = measure.id, by = c("features")]
   }
   if (!local)
     res = res[,  lapply(.SD, mean), .SDcols = measure.id, by = c("features")]

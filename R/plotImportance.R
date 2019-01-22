@@ -20,6 +20,7 @@
 #' @export
 plotImportance = function(importance, feature, mid, individual = FALSE, hline = TRUE, grid.points = TRUE) {
   if (inherits(importance, "featureImportance")) {
+    method = importance$method
     local = importance$local
     if (!local & importance$method == "permute")
       stop("Local feature importance was not computed.")
@@ -34,7 +35,7 @@ plotImportance = function(importance, feature, mid, individual = FALSE, hline = 
   assertFlag(hline)
   assertFlag(grid.points)
 
-  d = copy(subset(importance, features %in% feature))
+  d = copy(subset(importance, importance$features %in% feature))
   title = ifelse(individual, "ICI plot", "PI plot")
   by = c("replace.id", "features", "feature.value")
   pi = d[, lapply(.SD, mean, na.rm = TRUE), .SDcols = mid, by = by]
@@ -47,6 +48,9 @@ plotImportance = function(importance, feature, mid, individual = FALSE, hline = 
   if (grid.points)
     pp = pp + geom_point()
 
-  pp + geom_line() +
-    labs(title = title, x = feature, y = bquote(Delta~L ~ "based on" ~ .(toupper(mid))))
+  if (method == "permute")
+    pp = pp + geom_smooth(col = "black") else
+      pp = pp + geom_line()
+
+  pp + labs(title = title, x = feature, y = bquote(Delta~L ~ "based on" ~ .(toupper(mid))))
 }

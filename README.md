@@ -45,11 +45,14 @@ is on performance-based feature importance measures:
 ## Use case: Compute importance based on test data
 
 This use case computes the feature importance of a model based on a
-single test data set.
+single test data set. For this purpose, we first build a model (here a
+random forest) on training data:
 
 ``` r
 library(mlr)
 library(mlbench)
+library(ggplot2)
+library(gridExtra)
 library(featureImportance)
 set.seed(2018)
 
@@ -77,22 +80,7 @@ str(BostonHousing)
 ``` r
 # Create regression task for mlr
 boston.task = makeRegrTask(data = BostonHousing, target = "medv")
-boston.task
-```
 
-    ## Supervised task: BostonHousing
-    ## Type: regr
-    ## Target: medv
-    ## Observations: 506
-    ## Features:
-    ##    numerics     factors     ordered functionals 
-    ##          12           1           0           0 
-    ## Missings: FALSE
-    ## Has weights: FALSE
-    ## Has blocking: FALSE
-    ## Has coordinates: FALSE
-
-``` r
 # Specify the machine learning algorithm with the mlr package
 lrn = makeLearner("regr.randomForest", ntree = 100)
 
@@ -101,12 +89,32 @@ n = getTaskSize(boston.task)
 train.ind = sample(n, size = 0.6*n)
 test.ind = setdiff(1:n, train.ind)
 
-# Fit model on train data
-mod = train(lrn, boston.task, subset = train.ind)
-
-# Use feature values of randomly chosen observations from test data to plot the importance curves
+# Create test data using test indices
 test = getTaskData(boston.task, subset = test.ind)
-obs.id = sample(1:nrow(test), 5)
+
+# Fit model on train data using train indices
+mod = train(lrn, boston.task, subset = train.ind)
+```
+
+In general, there are two ways how the feature importance can be
+computed:
+
+1.  Using fixed feature values: Here, the feature values are set to
+    fixed values of the observation specified by `replace.ids`.
+2.  Permuting the feature values: Here, the values of the feature are
+    randomly permuted `n.feat.perm` times.
+
+### Using fixed feature values
+
+Visualizing the feature importance using fixed feature values is
+analogous to partial dependece plots and has the advantage that the
+local feature importance is calculated for each observation in the test
+data at the same feature
+values:
+
+``` r
+# Use feature values of 20 randomly chosen observations from test data to plot the importance curves
+obs.id = sample(1:nrow(test), 20)
 
 # Measure feature importance on test data
 imp = featureImportance(mod, data = test, replace.ids = obs.id, local = TRUE)
@@ -114,37 +122,69 @@ summary(imp)
 ```
 
     ##     features         mse
-    ##  1:    lstat 26.33521188
-    ##  2:       rm 20.19416617
-    ##  3:      dis  3.93376158
-    ##  4:     crim  3.61006537
-    ##  5:  ptratio  2.93144168
-    ##  6:    indus  2.38899017
-    ##  7:      nox  2.16394450
-    ##  8:      tax  1.30857793
-    ##  9:      age  0.95716756
-    ## 10:        b  0.61523373
-    ## 11:      rad  0.26533228
-    ## 12:       zn  0.07362979
+    ##  1:    lstat 26.51227057
+    ##  2:       rm 20.42330001
+    ##  3:      dis  3.93549268
+    ##  4:     crim  3.42121482
+    ##  5:  ptratio  2.69961656
+    ##  6:    indus  2.38307220
+    ##  7:      nox  2.11611801
+    ##  8:      tax  1.33993270
+    ##  9:      age  0.92233763
+    ## 10:        b  0.73622817
+    ## 11:      rad  0.30748057
+    ## 12:       zn  0.08012126
     ## 13:     chas  0.04761391
 
 ``` r
-# Plot PI curve
-plotImportance(imp, feat = "lstat", mid = "mse", individual = FALSE, hline = TRUE)
+# Plot PI and ICI curves for the lstat feature
+pi.curve = plotImportance(imp, feat = "lstat", mid = "mse", individual = FALSE, hline = TRUE)
+ici.curves = plotImportance(imp, feat = "lstat", mid = "mse", individual = TRUE, hline = FALSE)
+grid.arrange(pi.curve, ici.curves, nrow = 1)
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+
+### Permuting the feature
+
+Instead of using fixed feature values, the feature importance can also
+be computed by permuting the feature values. Here, the PI curve and ICI
+curves are evaluated on different randomly selected feature values.
+Thus, a smoother is internally used for plotting the curve:
 
 ``` r
-# Plot ICI curves
-plotImportance(imp, feat = "lstat", mid = "mse", individual = TRUE, hline = FALSE)
+# Measure feature importance on test data
+imp = featureImportance(mod, data = test, n.feat.perm = 20, local = TRUE)
+summary(imp)
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-2-2.png)<!-- -->
+    ##     features         mse
+    ##  1:    lstat 31.63230778
+    ##  2:       rm 25.93799124
+    ##  3:      dis  4.14780627
+    ##  4:     crim  3.45685574
+    ##  5:  ptratio  2.90229898
+    ##  6:    indus  2.53177576
+    ##  7:      nox  1.92721909
+    ##  8:      tax  1.37084858
+    ##  9:      age  1.03519666
+    ## 10:        b  0.55239478
+    ## 11:      rad  0.30777808
+    ## 12:     chas  0.26207277
+    ## 13:       zn  0.07047267
+
+``` r
+# Plot PI and ICI curves for the lstat feature
+pi.curve = plotImportance(imp, feat = "lstat", mid = "mse", individual = FALSE, hline = TRUE)
+ici.curves = plotImportance(imp, feat = "lstat", mid = "mse", individual = TRUE, hline = FALSE)
+grid.arrange(pi.curve, ici.curves, nrow = 1)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 ## Use case: Compute importance using a resampling technique
 
-Instead of computing the feature importance of a model by using a single
+Instead of computing the feature importance of a model based on a single
 test data set, one can repeat this process by embedding the feature
 importance calculation within a resampling procedure. The resampling
 procedure creates multiple models using different training sets, and the
@@ -155,21 +195,27 @@ models, one for each cross-validation fold.
 ``` r
 rdesc = makeResampleDesc("CV", iter = 5)
 res = resample(lrn, boston.task, resampling = rdesc, models = TRUE)
-imp = featureImportance(res, data = getTaskData(boston.task), n.feat.perm = 10)
+imp = featureImportance(res, data = getTaskData(boston.task), n.feat.perm = 20, local = TRUE)
 summary(imp)
 ```
 
     ##     features        mse
-    ##  1:    lstat 37.3600311
-    ##  2:       rm 24.9654495
-    ##  3:      nox  4.6920257
-    ##  4:      dis  2.9417279
-    ##  5:  ptratio  2.6563632
-    ##  6:     crim  2.4440099
-    ##  7:    indus  1.6214079
-    ##  8:      tax  1.5573068
-    ##  9:      age  0.8769893
-    ## 10:        b  0.8000723
-    ## 11:      rad  0.2938185
-    ## 12:       zn  0.1397263
-    ## 13:     chas  0.0530677
+    ##  1:    lstat 38.0804411
+    ##  2:       rm 25.1080555
+    ##  3:      nox  3.6368853
+    ##  4:      dis  3.2194944
+    ##  5:  ptratio  2.6612673
+    ##  6:     crim  2.4889930
+    ##  7:    indus  1.9956753
+    ##  8:      tax  1.7682908
+    ##  9:      age  0.9833056
+    ## 10:        b  0.6377554
+    ## 11:      rad  0.3154480
+    ## 12:     chas  0.3028489
+    ## 13:       zn  0.2365538
+
+``` r
+plotImportance(imp, feat = "lstat", mid = "mse", individual = FALSE, hline = TRUE)
+```
+
+![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->

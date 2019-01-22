@@ -151,9 +151,13 @@ computeFeatureImportanceIteration = function(i, method, features, unpermuted.per
           feature.value = NULL else
             feature.value = unique(type.convert(data.perm[ , feature]))
       }
-      ret[["feature.value"]] = feature.value
-      ret[["replace.id"]] = replace.id
+    } else {
+      if (local)
+        feature.value = type.convert(data.perm[permuted.perf$row.id, feature]) else
+          feature.value = NULL
     }
+    ret[["feature.value"]] = feature.value
+    ret[["replace.id"]] = replace.id
     return(ret)
   })
   feat.imp = rbindlist(feat.imp, idcol = "features")
