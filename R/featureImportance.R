@@ -103,10 +103,13 @@ computeFeatureImportance = function(object, data, features, target = NULL,
   }
 
   imp = lapply(iterate, function(i) {
-    computeFeatureImportanceIteration(i = i, method = method,
-      unpermuted.perf = unpermuted.perf, object = object, data = data,
-      features = features, target = target, measures = measures, local = local,
-      predict.fun = predict.fun, importance.fun = importance.fun)
+    # compute importance for each feature
+    feat.imp = lapply(features, function(feature) {
+    computeFeatureImportanceIteration(object = object, i = i, method = method,
+      unpermuted.perf = unpermuted.perf, data = data, feature = feature, target = target,
+      measures = measures, local = local, predict.fun = predict.fun, importance.fun = importance.fun)
+    })
+    rbindlist(feat.imp, idcol = "features", fill = TRUE)
   })
   imp = rbindlist(imp, idcol = idcol)
 
@@ -124,43 +127,79 @@ computeFeatureImportance = function(object, data, features, target = NULL,
   )
 }
 
-computeFeatureImportanceIteration = function(i, method, features, unpermuted.perf, object,
+computeFeatureImportanceIteration = function(object, i, method, feature, unpermuted.perf,
   data, target, measures, local, predict.fun, importance.fun) {
+  UseMethod("computeFeatureImportanceIteration")
+}
 
-  # compute importance for each feature
-  feat.imp = lapply(features, function(feature) {
+computeFeatureImportanceIteration.default = function(object, i, method, feature, unpermuted.perf,
+  data, target, measures, local, predict.fun, importance.fun) {
+  # permute feature
+  if (method == "permute") {
+    data.perm = permuteFeature(data, features = feature)
+    replace.id = if (local) attr(data.perm, "replace.id") else list(attr(data.perm, "replace.id"))
+  } else {
+    data.perm = replaceFeature(data, features = feature, replace.id = i)
+    replace.id = if (local) rep(i, nrow(data)) else i
+  }
+  if (local) {
+    feature.value = type.convert(data.perm[ , feature])
+  } else {
+    if (method == "permute")
+      feature.value = NULL else
+        feature.value = unique(type.convert(data.perm[ , feature]))
+  }
+  # measure performance when feature is shuffled
+  permuted.perf = measurePerformance(object, data = data.perm, target = target,
+    measures = measures, local = local, predict.fun = predict.fun)
+  # Compare true and shuffled performance
+  ret = measureFeatureImportance(permuted.perf, unpermuted.perf, importance.fun = importance.fun)
+  if (!is.null(feature.value))
+    ret = cbind(ret, feature.value = feature.value)
+  ret[["replace.id"]] = replace.id
+  return(ret)
+}
 
-    # permute feature
-    if (method == "permute") {
-      data.perm = permuteFeature(data, features = feature)
-      replace.id = if (local) attr(data.perm, "replace.id") else list(attr(data.perm, "replace.id"))
-    } else {
-      data.perm = replaceFeature(data, features = feature, replace.id = i)
-      replace.id = if (local) rep(i, nrow(data)) else i
-    }
-    # measure performance when feature is shuffled
-    permuted.perf = measurePerformance(object, data = data.perm, target = target,
+computeFeatureImportanceIteration.ResampleResult = function(object, i, method, feature, unpermuted.perf,
+  data, target, measures, local, predict.fun, importance.fun) {
+  mid = names(measures)
+
+  imp = lapply(seq_along(object$models), function(i) {
+    mod = object$models[[i]]
+    train.ind = mod$subset
+    test.ind = setdiff(BBmisc::seq_row(data), train.ind)
+    test = data[test.ind,]
+
+    # measure performance
+    unpermuted.perf = measurePerformance(object = mod, data = test, target = target,
       measures = measures, local = local, predict.fun = predict.fun)
-    # Compare true and shuffled performance
-    ret = measureFeatureImportance(permuted.perf, unpermuted.perf, importance.fun = importance.fun)
-    if (!inherits(object, "ResampleResult")) {
-      if (local) {
-        feature.value = type.convert(data.perm[ , feature])
-      } else {
-        if (method == "permute")
-          feature.value = NULL else
-            feature.value = unique(type.convert(data.perm[ , feature]))
-      }
-    } else {
-      if (local)
-        feature.value = type.convert(data.perm[permuted.perf$row.id, feature]) else
-          feature.value = NULL
-    }
-    ret[["feature.value"]] = feature.value
-    ret[["replace.id"]] = replace.id
+
+    ret = computeFeatureImportanceIteration(object = mod, i = i, method = method, feature = feature,
+      unpermuted.perf = unpermuted.perf, data = test, target = target, measures = measures,
+      local = local, predict.fun = predict.fun, importance.fun = importance.fun)
+    if (local)
+      ret$row.id = test.ind
     return(ret)
   })
-  feat.imp = rbindlist(feat.imp, idcol = "features")
+  imp = rbindlist(imp, idcol = "cv.iter")
 
-  return(feat.imp)
+  if (local) {
+    if (length(feature) == 1 & object$pred$instance$desc$id == "cross-validation") {
+      fv = colnames(imp)[grepl("feature.value", colnames(imp))]
+      by = c("row.id", "replace.id", fv)
+    } else {
+      by = "row.id"
+    }
+    # if (length(feature) == 1) {
+    #   by = c("row.id", "replace.id")
+    # } else {
+    #   fv = colnames(imp)[grepl("feature.value", colnames(imp))]
+    #   by = c("row.id", "replace.id", fv) #setdiff(colnames(imp), c(mid, "cv.iter"))
+    # }
+    ret = setkey(imp[, lapply(.SD, mean), .SDcols = mid, by = by], "row.id")
+  } else {
+    ret = imp[, lapply(.SD, mean), .SDcols = mid]
+  }
+
+  return(ret)
 }

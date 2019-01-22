@@ -8,7 +8,7 @@ predict.fun = function(object, newdata) predict(object, newdata, type = "class")
 task = pid.task #subsetTask(pid.task, subset = 1:100)
 
 # Extract task infos
-features = getTaskFeatureNames(task)[1:4]
+features = getTaskFeatureNames(task)[1:3]
 target = getTaskTargetNames(task)
 d = getTaskData(task)
 

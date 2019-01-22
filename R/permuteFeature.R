@@ -21,8 +21,8 @@ permuteFeature = function(data, features) {
 }
 
 replaceFeature = function(data, features, replace.id = NULL) {
-  if (length(features) > 1)
-    warning("Replacing multiple features at once. Not sure if this makes sense.")
+  #if (length(features) > 1)
+  #  warning("Replacing multiple features at once. Not sure if this makes sense.")
   if (any(is.na(features))) {
     if (length(features) == 1) {
       return(data)

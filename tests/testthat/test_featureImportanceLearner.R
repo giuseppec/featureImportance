@@ -1,7 +1,7 @@
 context("featureImportanceLearner works")
 test_that("featureImportanceLearner works", {
   n.feat.perm = 2
-  feat = list(features[1:2], features[3:4])
+  feat = list(features[1:2], features[3])
 
   resampling = list(
     makeResampleInstance(makeResampleDesc("CV", iters = 2), task),
@@ -17,7 +17,7 @@ test_that("featureImportanceLearner works", {
       length(feat)*n.feat.perm
 
     expect_data_table(imp$importance, nrows = nrow)
-    expect_set_equal(c("features", "n.feat.perm", mid), colnames(imp$importance))
+    expect_subset(c("features", "n.feat.perm", mid), colnames(imp$importance))
 
     imp.local = featureImportanceLearner(learner, task, rin, features = feat, n.feat.perm = n.feat.perm, measures = measures, local = TRUE)
     res = imp.local$resample
@@ -28,7 +28,7 @@ test_that("featureImportanceLearner works", {
     expect_data_table(imp.local, nrows = nrow)
     expect_equal(imp.local$acc, -imp.local$mmce)
     expect_equal(stri_split_fixed(unique(imp.local$features), ","), feat)
-    expect_set_equal(colnames(imp.local), c("features", "n.feat.perm", "row.id", mid))
+    expect_subset(c("features", "n.feat.perm", "row.id", mid), colnames(imp.local))
     expect_set_equal(res$pred$data$id, imp.local$row.id)
   }
 })

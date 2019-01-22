@@ -1,6 +1,6 @@
 context("featureImportance with WrappedModel works")
 test_that("featureImportance with WrappedModel works", {
-  feat = as.list(features)
+  feat = list(features[1], features[2:3])
   local = c(FALSE, TRUE)
   method = c("permute", "replace.id")
 
@@ -13,7 +13,7 @@ test_that("featureImportance with WrappedModel works", {
         imp = featureImportance(mod, data = d, features = feat, replace.ids = 1:2, measures = measures, local = loc)
       }
       imp = imp$importance
-      if (isTRUE(loc))
+      if (loc)
         expect_subset(c("row.id", "replace.id"), colnames(imp))
       nrow = length(feat)*n.feat.perm*ifelse(loc, nrow(d), 1)
 
@@ -40,7 +40,7 @@ test_that("featureImportance with WrappedModel works", {
 
 context("featureImportance with ResampleResult works")
 test_that("featureImportance with ResampleResult works", {
-  feat = list(features[1:2], features[3:4])
+  feat = list(features[1:2], features[3])
 
   for (i in seq_along(res.list)) {
     res = res.list[[i]]
@@ -50,7 +50,7 @@ test_that("featureImportance with ResampleResult works", {
     nrow = length(feat)*n.feat.perm
 
     expect_data_table(imp, nrows = nrow)
-    expect_set_equal(c("features", "n.feat.perm", mid), colnames(imp))
+    expect_subset(c("features", "n.feat.perm", mid), colnames(imp))
     expect_error(expect_warning(featureImportance(res, data = d[1:2,], features = feat,
       n.feat.perm = n.feat.perm, measures = measures, local = FALSE),
       regexp = "Use the same data that created the ResampleResult"))
@@ -62,7 +62,7 @@ test_that("featureImportance with ResampleResult works", {
     expect_data_table(imp.local, nrows = nrow)
     expect_equal(imp.local$acc, -imp.local$mmce)
     expect_equal(stri_split_fixed(unique(imp.local$features), ","), feat)
-    expect_subset(c("features", "n.feat.perm", "row.id", mid), colnames(imp.local))
+    expect_subset(c("features", "n.feat.perm", "row.id", mid), colnames(imp.local)) # for CV there must be a replace.id column
     expect_set_equal(res$pred$data$id, imp.local$row.id)
   }
 })

@@ -126,4 +126,3 @@ imp = featureImportance(res, data = getTaskData(boston.task), n.feat.perm = 20, 
 summary(imp)
 plotImportance(imp, feat = "lstat", mid = "mse", individual = FALSE, hline = TRUE)
 ```
-
