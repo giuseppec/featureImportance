@@ -105,6 +105,7 @@ computeFeatureImportance = function(object, data, features, target = NULL,
   imp = lapply(iterate, function(i) {
     # compute importance for each feature
     feat.imp = lapply(features, function(feature) {
+    # FIXME: split function into: Intervention, Prediction, Performance, Aggregation (if local = FALSE or Resampling)
     computeFeatureImportanceIteration(object = object, i = i, method = method,
       unpermuted.perf = unpermuted.perf, data = data, feature = feature, target = target,
       measures = measures, local = local, predict.fun = predict.fun, importance.fun = importance.fun)
