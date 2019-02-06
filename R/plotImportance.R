@@ -48,9 +48,11 @@ plotImportance = function(importance, feature, mid, individual = FALSE, hline = 
   if (grid.points)
     pp = pp + geom_point()
 
-  if (method == "permute")
-    pp = pp + geom_smooth(col = "black") else
-      pp = pp + geom_line()
+  if (inherits(importance, "featureImportance")) {
+    if (method == "permute")
+      pp = pp + geom_smooth(col = "black") else
+        pp = pp + geom_line()
+  }
 
   pp + labs(title = title, x = feature, y = bquote(Delta~L ~ "based on" ~ .(toupper(mid))))
 }
