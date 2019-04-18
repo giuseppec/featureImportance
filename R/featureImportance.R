@@ -13,6 +13,7 @@
 #' Default is NULL.
 #' @template arg_importance.fun
 #' @param ... Not used.
+#' @import future.apply
 #' @export
 featureImportance = function(object, data, features = NULL, target = NULL,
   n.feat.perm = 50, replace.ids = NULL, local = FALSE, measures, predict.fun = NULL,
@@ -102,7 +103,7 @@ computeFeatureImportance = function(object, data, features, target = NULL,
     method = "permute"
   }
 
-  imp = lapply(iterate, function(i) {
+  imp = future_lapply(iterate, function(i) {
     # compute importance for each feature
     feat.imp = lapply(features, function(feature) {
     # FIXME: split function into: Intervention, Prediction, Performance, Aggregation (if local = FALSE or Resampling)

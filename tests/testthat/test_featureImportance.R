@@ -66,3 +66,30 @@ test_that("featureImportance with ResampleResult works", {
     expect_set_equal(res$pred$data$id, imp.local$row.id)
   }
 })
+
+
+# context("featureImportance parallelization")
+# test_that("featureImportance parallelization", {
+#   feat = list(features[1:2], features[3])
+#
+#   plan(sequential)
+#   for (i in seq_along(res.list)) {
+#     res = res.list[[i]]
+#     rin = resampling[[i]]
+#     start_time = Sys.time()
+#     imp = featureImportance(res, data = d, features = feat, n.feat.perm = 100L, measures = measures, local = FALSE)
+#     end_time = Sys.time()
+#     print(end_time - start_time)
+#   }
+#
+#   library(future.apply)
+#   plan(multiprocess(workers = 4L))
+#   for (i in seq_along(res.list)) {
+#     res = res.list[[i]]
+#     rin = resampling[[i]]
+#     start_time = Sys.time()
+#     imp = featureImportance(res, data = d, features = feat, n.feat.perm = 100L, measures = measures, local = FALSE)
+#     end_time = Sys.time()
+#     print(end_time - start_time)
+#   }
+# })
