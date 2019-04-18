@@ -112,7 +112,7 @@ computeFeatureImportance = function(object, data, features, target = NULL,
       measures = measures, local = local, predict.fun = predict.fun, importance.fun = importance.fun)
     })
     rbindlist(feat.imp, idcol = "features", fill = TRUE)
-  })
+  }, future.seed = TRUE)
   imp = rbindlist(imp, idcol = idcol)
 
   # replace the feature column (which is a vector of id) with its corresponding feature sets
