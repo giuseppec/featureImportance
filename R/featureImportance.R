@@ -146,7 +146,7 @@ computeFeatureImportanceIteration.default = function(object, i, method, feature,
   if (local) {
     feature.value = type.convert(data.perm[ , feature])
   } else {
-    if (method == "permute")
+    if (method == "permute" | is.na(feature))
       feature.value = NULL else
         feature.value = unique(type.convert(data.perm[ , feature]))
   }
