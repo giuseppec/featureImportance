@@ -13,7 +13,8 @@ Imports:
     BBmisc (>= 1.11),
     parallelMap (>= 1.3),
     ggplot2,
-    stringi
+    stringi,
+    future.apply
 Suggests: 
     testthat,
     e1071,
