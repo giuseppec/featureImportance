@@ -4,8 +4,14 @@
 \alias{plotImportance}
 \title{Plot function for feature importance}
 \usage{
-plotImportance(importance, feature, mid, individual = FALSE,
-  hline = TRUE, grid.points = TRUE)
+plotImportance(
+  importance,
+  feature,
+  mid,
+  individual = FALSE,
+  hline = TRUE,
+  grid.points = TRUE
+)
 }
 \arguments{
 \item{importance}{[\code{featureImportance | data.frame}] \cr

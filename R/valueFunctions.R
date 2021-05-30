@@ -16,6 +16,7 @@ calculateValueFunctionImportance = function(features, object, data, target = NUL
   imp = featureImportance(object = object, data = data, features = features,
     target = target, measures = measures, local = local,
     predict.fun = predict.fun, n.feat.perm = n.feat.perm)
+  # for exact computation replace n.feat.perm with , replace.ids = 1:nrow(data))
 
   mid = names(imp$measures)
   imp = imp$importance

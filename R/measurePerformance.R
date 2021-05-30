@@ -24,7 +24,7 @@ measurePerformance.ResampleResult = function(object, data, target = NULL,
   measures = assertMeasure(measures)
   mid = names(measures)
   if (is.null(target))
-    target = getTaskTargetNames(getTaskDesc(object))
+    target = mlr::getTaskTargetNames(mlr::getTaskDesc(object))
 
   perf = lapply(seq_along(object$models), function(i) {
     mod = object$models[[i]]

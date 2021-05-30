@@ -12,7 +12,7 @@ pimp = function(learner, task, resampling, measures, features = NULL,
   measures = assertMeasure(measures)
   mid = names(measures)
   if (is.null(features))
-    features = as.list(getTaskFeatureNames(task))
+    features = as.list(mlr::getTaskFeatureNames(task))
 
   # compute importance
   imp = featureImportanceLearner(learner, task, resampling, measures,
@@ -58,7 +58,7 @@ print.pimp = function(x) {
 nullImportance = function(learner, task, resampling, measures, features = NULL,
   n.feat.perm = 1, n.target.perm = 1) {
   if (is.null(features))
-    features = as.list(getTaskFeatureNames(task))
+    features = as.list(mlr::getTaskFeatureNames(task))
   args = list(learner = learner, task = task, resampling = resampling,
     measures = measures, features = features, n.feat.perm = n.feat.perm)
   #parallelLibrary("featureImportance", master = FALSE, level = "n.target.perm", show.info = FALSE)
@@ -80,9 +80,9 @@ nullImportanceIteration = function(i, learner, task, resampling, measures, featu
 # modified version of unexported mlr:::changeData
 changeTask = function(task, data, costs, weights) {
   if (missing(data))
-    data = getTaskData(task)
+    data = mlr::getTaskData(task)
   if (missing(costs))
-    costs = getTaskCosts(task)
+    costs = mlr::getTaskCosts(task)
   if (missing(weights))
     weights = task$weights
   task$env = new.env(parent = emptyenv())

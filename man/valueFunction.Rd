@@ -5,13 +5,33 @@
 \alias{calculateValueFunctionImportance}
 \alias{calculateValueFunctionPerformance}
 \title{Value Functions}
-\format{none}
-\usage{
-calculateValueFunctionImportance(features, object, data, target = NULL,
-  n.feat.perm = 50, measures, predict.fun = NULL, local = FALSE)
+\format{
+none
 
-calculateValueFunctionPerformance(features, object, data, target = NULL,
-  n.feat.perm = 50, measures, predict.fun = NULL, local = FALSE)
+none
+}
+\usage{
+calculateValueFunctionImportance(
+  features,
+  object,
+  data,
+  target = NULL,
+  n.feat.perm = 50,
+  measures,
+  predict.fun = NULL,
+  local = FALSE
+)
+
+calculateValueFunctionPerformance(
+  features,
+  object,
+  data,
+  target = NULL,
+  n.feat.perm = 50,
+  measures,
+  predict.fun = NULL,
+  local = FALSE
+)
 }
 \arguments{
 \item{features}{[\code{character}] \cr

@@ -4,19 +4,24 @@
 \alias{featureImportanceLearner}
 \title{Feature Importance}
 \usage{
-featureImportanceLearner(learner, task, resampling,
+featureImportanceLearner(
+  learner,
+  task,
+  resampling,
   measures = mlr::getDefaultMeasure(task),
-  features = as.list(mlr::getTaskFeatureNames(task)), n.feat.perm = 50,
-  ...)
+  features = as.list(mlr::getTaskFeatureNames(task)),
+  n.feat.perm = 50,
+  ...
+)
 }
 \arguments{
 \item{learner}{[\code{\link[mlr]{Learner}}] \cr
 The learner.}
 
-\item{task}{(\link{Task})\cr
+\item{task}{(\link[mlr]{Task})\cr
 The task.}
 
-\item{resampling}{(\link{ResampleDesc} or \link{ResampleInstance})\cr
+\item{resampling}{(\link[mlr]{ResampleDesc} or \link[mlr]{ResampleInstance})\cr
 Resampling strategy.
 If a description is passed, it is instantiated automatically.}
 

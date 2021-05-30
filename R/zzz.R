@@ -1,7 +1,6 @@
 #' @import BBmisc
 #' @import checkmate
 #' @import data.table
-#' @import mlr
 #' @import ggplot2
 #' @import parallelMap
 #' @import stringi

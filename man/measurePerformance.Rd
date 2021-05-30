@@ -4,8 +4,14 @@
 \alias{measurePerformance}
 \title{Measure Performance}
 \usage{
-measurePerformance(object, data, target = NULL, measures,
-  local = FALSE, predict.fun = NULL)
+measurePerformance(
+  object,
+  data,
+  target = NULL,
+  measures,
+  local = FALSE,
+  predict.fun = NULL
+)
 }
 \arguments{
 \item{object}{[any] \cr

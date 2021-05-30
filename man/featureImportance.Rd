@@ -4,10 +4,19 @@
 \alias{featureImportance}
 \title{Feature Importance}
 \usage{
-featureImportance(object, data, features = NULL, target = NULL,
-  n.feat.perm = 50, replace.ids = NULL, local = FALSE, measures,
-  predict.fun = NULL, importance.fun = function(permuted, unpermuted)
-  return(unpermuted - permuted), ...)
+featureImportance(
+  object,
+  data,
+  features = NULL,
+  target = NULL,
+  n.feat.perm = 50,
+  replace.ids = NULL,
+  local = FALSE,
+  measures,
+  predict.fun = NULL,
+  importance.fun = function(permuted, unpermuted) return(unpermuted - permuted),
+  ...
+)
 }
 \arguments{
 \item{object}{[any] \cr

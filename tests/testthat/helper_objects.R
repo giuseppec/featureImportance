@@ -3,17 +3,17 @@ set.seed(123)
 configureMlr(show.info = FALSE, show.learner.output = FALSE)
 
 # learner and task
-learner = makeLearner("classif.rpart", predict.type = "prob")
+learner = mlr::makeLearner("classif.rpart", predict.type = "prob")
 predict.fun = function(object, newdata) predict(object, newdata, type = "class")
-task = pid.task #subsetTask(pid.task, subset = 1:100)
+task = mlr::subsetTask(pid.task, subset = 1:100)
 
 # Extract task infos
-features = getTaskFeatureNames(task)[1:3]
-target = getTaskTargetNames(task)
-d = getTaskData(task)
+features = mlr::getTaskFeatureNames(task)[1:3]
+target = mlr::getTaskTargetNames(task)
+d = mlr::getTaskData(task)
 
 # Define mlr measure
-measures = list(acc, mmce)
+measures = list(mlr::acc, mlr::mmce)
 mid = BBmisc::vcapply(measures, function(x) x$id)
 
 # Define equivalent measures using functions
@@ -26,11 +26,11 @@ n.feat.perm = 2
 
 # Define resampling strategy
 resampling = list(
-  makeResampleInstance(makeResampleDesc("CV", iters = 2), task),
-  makeResampleInstance(makeResampleDesc("Bootstrap", iters = 2), task),
-  makeResampleInstance(makeResampleDesc("RepCV", folds = 2, reps = 2), task)
+  mlr::makeResampleInstance(mlr::makeResampleDesc("CV", iters = 2), task),
+  mlr::makeResampleInstance(mlr::makeResampleDesc("Bootstrap", iters = 2), task),
+  mlr::makeResampleInstance(mlr::makeResampleDesc("RepCV", folds = 2, reps = 2), task)
 )
 
 # Fit model and ResampleResult
-mod = train(learner, task)
-res.list = lapply(resampling, function(rin) resample(learner, task, rin, measures, models = TRUE, keep.pred = TRUE))
+mod = mlr::train(learner, task)
+res.list = lapply(resampling, function(rin) mlr::resample(learner, task, rin, measures, models = TRUE, keep.pred = TRUE))

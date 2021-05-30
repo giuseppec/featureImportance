@@ -5,8 +5,7 @@
 \title{Measures the Feature Importance
 Measures the drop in performance between permuted and unpermuted features w.r.t. a function.}
 \usage{
-measureFeatureImportance(permuted.perf, unpermuted.perf,
-  importance.fun = NULL)
+measureFeatureImportance(permuted.perf, unpermuted.perf, importance.fun = NULL)
 }
 \arguments{
 \item{permuted.perf}{a vector of the performance(s) when a feature was shuffled}

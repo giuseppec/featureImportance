@@ -8,9 +8,9 @@ assertMeasure = function(measures) {
 }
 
 assertResampleResultData = function(object, data, target) {
-  td = getTaskDesc(object)
-  ts = getTaskSize(td)
-  tn = getTaskTargetNames(td)
+  td = mlr::getTaskDesc(object)
+  ts = mlr::getTaskSize(td)
+  tn = mlr::getTaskTargetNames(td)
 
   # check ResampleResult
   if (is.null(object$models))

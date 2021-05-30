@@ -33,7 +33,7 @@ featureImportance.WrappedModel = function(object, data, features = NULL, target 
   n.feat.perm = 50, replace.ids = NULL, local = FALSE, measures = mlr::getDefaultMeasure(object$task.desc),
   predict.fun = NULL, importance.fun = NULL, ...) {
 
-  assertSubset(target, choices = getTaskTargetNames(getTaskDesc(object)), empty.ok = TRUE)
+  assertSubset(target, choices = mlr::getTaskTargetNames(mlr::getTaskDesc(object)), empty.ok = TRUE)
   measures = assertMeasure(measures)
   assertNull(predict.fun)
 
@@ -58,7 +58,7 @@ featureImportance.ResampleResult = function(object, data, features = NULL, targe
 
   # set defaults
   if (is.null(target))
-    target = getTaskTargetNames(getTaskDesc(object))
+    target = mlr::getTaskTargetNames(mlr::getTaskDesc(object))
   if (is.null(features))
     features = as.list(object$models[[1]]$features)
 
@@ -115,8 +115,10 @@ computeFeatureImportance = function(object, data, features, target = NULL,
   imp = rbindlist(imp, idcol = idcol)
 
   # replace the feature column (which is a vector of id) with its corresponding feature sets
-  if (!is.character(imp$features))
-    imp$features = stri_paste_list(features[imp$features], sep = ",")
+  if (!is.character(imp$features)) {
+    featnames = stri_paste_list(features, sep = ",")
+    imp$features = featnames[imp$features]
+  }
 
   makeS3Obj(
     classes = "featureImportance",
@@ -146,7 +148,7 @@ computeFeatureImportanceIteration.default = function(object, i, method, feature,
   if (local) {
     feature.value = type.convert(data.perm[ , feature])
   } else {
-    if (method == "permute" | is.na(feature))
+    if (method == "permute" | any(is.na(feature)))
       feature.value = NULL else
         feature.value = unique(type.convert(data.perm[ , feature]))
   }
