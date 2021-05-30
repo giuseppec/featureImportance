@@ -102,23 +102,25 @@ computeFeatureImportance = function(object, data, features, target = NULL,
     method = "permute"
   }
 
+  fnames = stri_paste_list(features, sep = ",")
+
   imp = lapply(iterate, function(i) {
     # compute importance for each feature
-    feat.imp = lapply(features, function(feature) {
+    feat.imp = setNames(lapply(features, function(feature) {
     # FIXME: split function into: Intervention, Prediction, Performance, Aggregation (if local = FALSE or Resampling)
     computeFeatureImportanceIteration(object = object, i = i, method = method,
       unpermuted.perf = unpermuted.perf, data = data, feature = feature, target = target,
       measures = measures, local = local, predict.fun = predict.fun, importance.fun = importance.fun)
-    })
-    rbindlist(feat.imp, idcol = "features", fill = TRUE)
+    }), fnames)
+    return(rbindlist(feat.imp, idcol = "features", fill = TRUE))
   })
   imp = rbindlist(imp, idcol = idcol)
 
   # replace the feature column (which is a vector of id) with its corresponding feature sets
-  if (!is.character(imp$features)) {
-    featnames = stri_paste_list(features, sep = ",")
-    imp$features = featnames[imp$features]
-  }
+  # if (!is.character(imp$features)) {
+  #   featnames = stri_paste_list(features, sep = ",")
+  #   imp$features = featnames[imp$features]
+  # }
 
   makeS3Obj(
     classes = "featureImportance",

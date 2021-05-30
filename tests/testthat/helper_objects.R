@@ -1,11 +1,11 @@
 set.seed(123)
 #options(mlr.debug.seed = 123L)
-configureMlr(show.info = FALSE, show.learner.output = FALSE)
+mlr::configureMlr(show.info = FALSE, show.learner.output = FALSE)
 
 # learner and task
 learner = mlr::makeLearner("classif.rpart", predict.type = "prob")
 predict.fun = function(object, newdata) predict(object, newdata, type = "class")
-task = mlr::subsetTask(pid.task, subset = 1:100)
+task = mlr::subsetTask(mlr::pid.task, subset = 1:100)
 
 # Extract task infos
 features = mlr::getTaskFeatureNames(task)[1:3]
